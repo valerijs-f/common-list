@@ -29,6 +29,8 @@ const {
   handleListDeletedByOwner,
   ownerRemovedListNotice,
   dismissOwnerNotice,
+  inaccessibleListNotice,
+  dismissInaccessibleListNotice,
   newTitle,
   authorName,
   newTaskField,
@@ -51,6 +53,11 @@ const {
       v-if="ownerRemovedListNotice"
       :message="ownerRemovedListNotice"
       @dismiss="dismissOwnerNotice"
+    />
+    <OwnerRemovedNoticeBanner
+      v-if="inaccessibleListNotice"
+      :message="inaccessibleListNotice"
+      @dismiss="dismissInaccessibleListNotice"
     />
     <div class="rounded-xl border border-gray-700 bg-gray-900 p-6">
       <div v-if="listId" class="mb-6 space-y-3">

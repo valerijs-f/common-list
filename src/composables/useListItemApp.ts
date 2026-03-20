@@ -147,6 +147,23 @@ export function useListItemApp() {
     ownerRemovedListNotice.value = null;
   }
 
+  const inaccessibleListNotice = ref<string | null>(null);
+  let inaccessibleNoticeClear: ReturnType<typeof setTimeout> | undefined;
+
+  function dismissInaccessibleListNotice() {
+    if (inaccessibleNoticeClear) {
+      clearTimeout(inaccessibleNoticeClear);
+      inaccessibleNoticeClear = undefined;
+    }
+    inaccessibleListNotice.value = null;
+  }
+
+  function showInaccessibleListNotice(message: string) {
+    inaccessibleListNotice.value = message;
+    if (inaccessibleNoticeClear) clearTimeout(inaccessibleNoticeClear);
+    inaccessibleNoticeClear = setTimeout(dismissInaccessibleListNotice, 8000);
+  }
+
   function notifyOwnerDeletedList() {
     ownerRemovedListNotice.value =
       "The list owner deleted this list. It has been removed from your lists.";
@@ -165,11 +182,29 @@ export function useListItemApp() {
       const id = listId.value;
       const doc = listDocument.value;
       if (!id || !doc || doc.$isLoaded) return null;
-      if (doc.$jazz.loadingState === CoValueLoadingState.DELETED) return id;
+      // `listId` can update before useCoState drops the previous doc — never pair a new id with an old doc's loadingState.
+      if (doc.$jazz.id !== id) return null;
+      const state = doc.$jazz.loadingState;
+      if (state === CoValueLoadingState.DELETED) return { id, kind: "deleted" } as const;
+      if (state === CoValueLoadingState.UNAVAILABLE) return { id, kind: "unavailable" } as const;
+      if (state === CoValueLoadingState.UNAUTHORIZED) return { id, kind: "unauthorized" } as const;
       return null;
     },
-    (deletedId) => {
-      if (deletedId) handleListDeletedByOwner(deletedId);
+    (payload) => {
+      if (!payload) return;
+      if (payload.kind === "deleted") {
+        handleListDeletedByOwner(payload.id);
+        return;
+      }
+      removeIdFromVisited(payload.id);
+      if (!suppressOwnerDeletedNoticeFor.has(payload.id)) {
+        showInaccessibleListNotice(
+          payload.kind === "unavailable"
+            ? "This list could not be loaded. The link may be wrong or the list may no longer exist."
+            : "You do not have access to this list.",
+        );
+      }
+      if (listId.value === payload.id) void router.replace({ name: "list" });
     },
   );
 
@@ -338,6 +373,8 @@ export function useListItemApp() {
     handleListDeletedByOwner,
     ownerRemovedListNotice,
     dismissOwnerNotice,
+    inaccessibleListNotice,
+    dismissInaccessibleListNotice,
     newTitle,
     authorName,
     newTaskField,
