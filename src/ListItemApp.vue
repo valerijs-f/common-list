@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
-import { Bars3Icon, PencilSquareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { Bars3Icon, PencilSquareIcon, ShareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { Account, co } from "jazz-tools";
 import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle, useFocus } from "@vueuse/core";
@@ -33,7 +33,7 @@ const myAccountId = computed(() => {
 });
 
 const newTitle = ref("");
-const { copy, copied } = useClipboard({ copiedDuring: 2000 });
+const { copy } = useClipboard({ copiedDuring: 2000 });
 
 const listId = ref<string | undefined>(paramListId());
 
@@ -169,7 +169,27 @@ function confirmDeleteListItem() {
   deleteConfirmDialog.value?.close();
 }
 
-const copyLink = () => copy(window.location.href);
+async function shareOrCopy() {
+  const url = window.location.href;
+  const title = displayListName.value;
+  const text = `${title}\n${url}`;
+
+  if (typeof navigator !== "undefined" && "share" in navigator) {
+    const data: ShareData = { title, text, url };
+    if (navigator.canShare && !navigator.canShare(data)) {
+      copy(url);
+      return;
+    }
+    try {
+      await navigator.share(data);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
+      copy(url);
+    }
+    return;
+  }
+  copy(url);
+}
 
 const listItemsEl = useTemplateRef<HTMLElement>("listItemsEl");
 
@@ -204,6 +224,17 @@ useSortable(listItemsEl, listItems, {
     <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
         <div v-if="listId" class="mb-6 space-y-3">
           <div v-if="listDocument?.$isLoaded && canEditListName && editingListName" class="space-y-2">
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="shrink-0 rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                aria-label="Share list"
+                title="Share list"
+                @click="shareOrCopy"
+              >
+                <ShareIcon class="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
             <label class="sr-only" for="list-name-edit">List name</label>
             <input
               id="list-name-edit"
@@ -230,19 +261,33 @@ useSortable(listItemsEl, listItems, {
             </div>
           </div>
           <div v-else class="flex items-start justify-between gap-3">
-            <h1 class="min-w-0 flex-1 text-3xl font-bold text-white wrap-break-word">
+            <h1
+              class="min-w-0 flex-1 truncate text-3xl font-bold text-white"
+              :title="displayListName"
+            >
               {{ displayListName }}
             </h1>
-            <button
-              v-if="canEditListName"
-              type="button"
-              class="shrink-0 rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-              aria-label="Rename list"
-              title="Rename list"
-              @click="startEditListName"
-            >
-              <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
-            </button>
+            <div class="flex shrink-0 items-start gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                aria-label="Share list"
+                title="Share list"
+                @click="shareOrCopy"
+              >
+                <ShareIcon class="h-5 w-5" aria-hidden="true" />
+              </button>
+              <button
+                v-if="canEditListName"
+                type="button"
+                class="rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                aria-label="Rename list"
+                title="Rename list"
+                @click="startEditListName"
+              >
+                <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -327,20 +372,6 @@ useSortable(listItemsEl, listItems, {
             No list items yet. Add one above!
           </p>
 
-          <div v-if="listId" class="mt-6 flex items-center gap-2">
-            <p class="text-xs text-gray-500 break-all flex-1">
-              List ID: {{ listId }}
-            </p>
-            <button
-              @click="copyLink"
-              class="shrink-0 px-3 py-1 text-xs rounded-md border transition-colors"
-              :class="copied
-                ? 'border-green-600 text-green-400'
-                : 'border-gray-600 text-gray-400 hover:text-gray-200 hover:border-gray-500'"
-            >
-              {{ copied ? "Copied!" : "Copy link" }}
-            </button>
-          </div>
         </template>
       </div>
     </div>
