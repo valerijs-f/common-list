@@ -3,7 +3,7 @@ import { until } from "@vueuse/core";
 import { passkeyAuthResolved, passkeySignedIn } from "../auth/passkeyAuthState";
 import ProtectedLayout from "../layouts/ProtectedLayout.vue";
 import LoginView from "../views/LoginView.vue";
-import TodoView from "../views/TodoView.vue";
+import ListItemView from "../views/ListItemView.vue";
 
 function safeInternalPath(raw: unknown): string {
   if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//"))
@@ -32,7 +32,7 @@ const router = createRouter({
         {
           path: "lists/:listId?",
           name: "list",
-          component: TodoView,
+          component: ListItemView,
         },
       ],
     },

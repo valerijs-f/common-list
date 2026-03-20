@@ -6,7 +6,7 @@ import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle, useFocus } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
-import { ToDo, ToDoList } from "./schema";
+import { ListItem, ListItemList } from "./schema";
 
 const route = useRoute();
 const router = useRouter();
@@ -36,7 +36,7 @@ const listId = ref<string | undefined>(paramListId());
 if (!listId.value) {
   const group = Group.create();
   group.addMember("everyone", "writer");
-  const newList = ToDoList.create([], { owner: group });
+  const newList = ListItemList.create([], { owner: group });
   const id = newList.$jazz.id;
   listId.value = id;
   void router.replace({ name: "list", params: { listId: id } });
@@ -50,33 +50,33 @@ watch(
   },
 );
 
-const todoList = useCoState(ToDoList, listId, {
+const listItemList = useCoState(ListItemList, listId, {
   resolve: { $each: true },
 });
 
-const todos = computed(() => {
-  const list = todoList.value;
+const listItems = computed(() => {
+  const list = listItemList.value;
   if (!list?.$isLoaded) return [];
   return [...list].sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0));
 });
 
-// Page title with todo count
-const pageTitle = useTitle("To Do");
+// Page title with incomplete list item count
+const pageTitle = useTitle("List");
 watchEffect(() => {
-  const count = todos.value.filter((t) => !t.completed).length;
-  pageTitle.value = count > 0 ? `(${count}) To Do` : "To Do";
+  const count = listItems.value.filter((t) => !t.completed).length;
+  pageTitle.value = count > 0 ? `(${count}) List` : "List";
 });
 
-// Auto-focus input after adding a todo
+// Auto-focus input after adding a list item
 const inputEl = useTemplateRef<HTMLInputElement>("inputEl");
 const { focused: inputFocused } = useFocus(inputEl);
 
-function addTodo() {
-  const list = todoList.value;
+function addListItem() {
+  const list = listItemList.value;
   const title = newTitle.value.trim();
   const author = authorName.value;
   if (!title || !author || !list?.$isLoaded) return;
-  const sorted = todos.value;
+  const sorted = listItems.value;
   const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
   const order = generateKeyBetween(lastOrder, null);
   list.$jazz.push({ title, completed: false, order, author });
@@ -84,17 +84,17 @@ function addTodo() {
   inputFocused.value = true;
 }
 
-function toggleTodo(todo: co.loaded<typeof ToDo>) {
-  todo.$jazz.set("completed", !todo.completed);
+function toggleListItem(listItem: co.loaded<typeof ListItem>) {
+  listItem.$jazz.set("completed", !listItem.completed);
 }
 
 const deleteConfirmDialog = useTemplateRef<HTMLDialogElement>("deleteConfirmDialog");
 const pendingDeleteId = ref<string | null>(null);
 const pendingDeleteTitle = ref("");
 
-function requestDeleteTodo(todo: co.loaded<typeof ToDo>) {
-  pendingDeleteId.value = todo.$jazz.id;
-  pendingDeleteTitle.value = todo.title;
+function requestDeleteListItem(listItem: co.loaded<typeof ListItem>) {
+  pendingDeleteId.value = listItem.$jazz.id;
+  pendingDeleteTitle.value = listItem.title;
   deleteConfirmDialog.value?.showModal();
 }
 
@@ -111,9 +111,9 @@ function cancelDeleteDialog() {
   deleteConfirmDialog.value?.close();
 }
 
-function confirmDeleteTodo() {
+function confirmDeleteListItem() {
   const id = pendingDeleteId.value;
-  const list = todoList.value;
+  const list = listItemList.value;
   if (id && list?.$isLoaded) {
     const listIndex = [...list].findIndex((t) => t.$jazz.id === id);
     if (listIndex !== -1) list.$jazz.remove(listIndex);
@@ -123,14 +123,14 @@ function confirmDeleteTodo() {
 
 const copyLink = () => copy(window.location.href);
 
-const todoListEl = useTemplateRef<HTMLElement>("todoListEl");
+const listItemsEl = useTemplateRef<HTMLElement>("listItemsEl");
 
-useSortable(todoListEl, todos, {
-  // List mount is delayed until `todoList` loads; without this, Sortable never inits (ref was null on mount).
+useSortable(listItemsEl, listItems, {
+  // List mount is delayed until `listItemList` loads; without this, Sortable never inits (ref was null on mount).
   watchElement: true,
   handle: ".drag-handle",
   /** Let delete / other controls receive clicks without Sortable interfering */
-  filter: "button, .todo-delete",
+  filter: "button, .list-item-delete",
   preventOnFilter: true,
   animation: 150,
   onUpdate: (e) => {
@@ -139,7 +139,7 @@ useSortable(todoListEl, todos, {
     insertNodeAt(e.from, e.item, e.oldIndex!);
 
     if (e.oldIndex == null || e.newIndex == null) return;
-    const sorted = todos.value;
+    const sorted = listItems.value;
     const moved = sorted[e.oldIndex];
     if (!moved) return;
 
@@ -166,17 +166,17 @@ useSortable(todoListEl, todos, {
 
       <!-- Card -->
       <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
-        <h1 class="text-3xl font-bold text-white mb-6">To Do</h1>
+        <h1 class="text-3xl font-bold text-white mb-6">List</h1>
 
         <div
-          v-if="!todoList?.$isLoaded"
+          v-if="!listItemList?.$isLoaded"
           class="text-gray-400 text-center py-8"
         >
           Loading...
         </div>
 
         <template v-else>
-          <form @submit.prevent="addTodo" class="mb-6 space-y-3">
+          <form @submit.prevent="addListItem" class="mb-6 space-y-3">
             <input
               ref="inputEl"
               v-model="newTitle"
@@ -192,10 +192,10 @@ useSortable(todoListEl, todos, {
             </button>
           </form>
 
-          <ul ref="todoListEl" class="space-y-2">
+          <ul ref="listItemsEl" class="space-y-2">
             <li
-              v-for="todo in todos"
-              :key="todo.$jazz.id"
+              v-for="listItem in listItems"
+              :key="listItem.$jazz.id"
               class="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800"
             >
               <span
@@ -210,31 +210,31 @@ useSortable(todoListEl, todos, {
               </span>
               <input
                 type="checkbox"
-                :checked="todo.completed"
-                @change="toggleTodo(todo)"
+                :checked="listItem.completed"
+                @change="toggleListItem(listItem)"
                 class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
               />
               <span class="flex-1 min-w-0">
                 <span
                   class="block min-w-0 truncate"
-                  :title="todo.title"
+                  :title="listItem.title"
                   :class="
-                    todo.completed
+                    listItem.completed
                       ? 'line-through text-gray-500'
                       : 'text-gray-200'
                   "
                 >
-                  {{ todo.title }}
+                  {{ listItem.title }}
                 </span>
                 <span class="block text-xs text-gray-500 mt-0.5 truncate">
-                  Added by {{ todo.author }}
+                  Added by {{ listItem.author }}
                 </span>
               </span>
               <button
                 type="button"
-                class="todo-delete shrink-0 text-gray-500 hover:text-red-400 p-1 rounded transition-colors"
+                class="list-item-delete shrink-0 text-gray-500 hover:text-red-400 p-1 rounded transition-colors"
                 title="Delete"
-                @click.stop="requestDeleteTodo(todo)"
+                @click.stop="requestDeleteListItem(listItem)"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6L6 18M6 6l12 12" />
@@ -243,8 +243,8 @@ useSortable(todoListEl, todos, {
             </li>
           </ul>
 
-          <p v-if="todos.length === 0" class="text-gray-500 text-center py-4">
-            No todos yet. Add one above!
+          <p v-if="listItems.length === 0" class="text-gray-500 text-center py-4">
+            No list items yet. Add one above!
           </p>
 
           <div v-if="listId" class="mt-6 flex items-center gap-2">
@@ -295,7 +295,7 @@ useSortable(todoListEl, todos, {
         <button
           type="button"
           class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-          @click="confirmDeleteTodo"
+          @click="confirmDeleteListItem"
         >
           Delete
         </button>
