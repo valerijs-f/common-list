@@ -104,17 +104,18 @@ async function confirmLogOut() {
       class="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-800 bg-gray-950/95 backdrop-blur-md supports-backdrop-filter:bg-gray-950/80 pb-[env(safe-area-inset-bottom,0px)]"
       aria-label="Main"
     >
-      <div class="grid grid-cols-3">
+      <div
+        class="grid grid-cols-3 items-center justify-items-center gap-y-1 py-2 touch-manipulation"
+      >
         <RouterLink
           :to="{ name: 'list' }"
-          class="flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-500 transition-colors"
-          active-class="text-blue-400"
+          class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors -outline-offset-2"
         >
           <HomeIcon class="h-6 w-6 shrink-0" aria-hidden="true" />
         </RouterLink>
         <button
           type="button"
-          class="flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-500 transition-colors hover:text-gray-300 active:text-blue-400"
+          class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:text-gray-300 active:text-blue-400 -outline-offset-2"
           aria-label="Create new list"
           @click="openNewListDialog"
         >
@@ -122,7 +123,7 @@ async function confirmLogOut() {
         </button>
         <button
           type="button"
-          class="flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-500 transition-colors hover:text-gray-300 active:text-red-400"
+          class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:text-gray-300 active:text-red-400 -outline-offset-2"
           aria-label="Log out"
           @click="openLogOutDialog"
         >
