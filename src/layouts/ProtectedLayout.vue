@@ -4,14 +4,14 @@ import { computed, ref, useTemplateRef } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { ListBulletIcon, PlusIcon } from "@heroicons/vue/24/outline";
 import { MusicalNoteIcon } from "@heroicons/vue/24/solid";
-import { Account } from "jazz-tools";
 import { useAccount } from "community-jazz-vue";
+import { AppAccount } from "../appAccount";
 import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
 import { createNewListId } from "../lists/createNewList";
 import { appNavTabs, type AppNavIcon } from "../navigation/appNav";
 
 const router = useRouter();
-const me = useAccount(Account, { resolve: { profile: true } });
+const me = useAccount(AppAccount, { resolve: { profile: true } });
 
 const myAccountId = computed(() => {
   const m = me.value;

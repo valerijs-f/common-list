@@ -2,6 +2,7 @@
 import { JazzVueProvider } from "community-jazz-vue";
 import "jazz-tools/inspector/register-custom-element";
 import PasskeyAuthBootstrap from "./auth/PasskeyAuthBootstrap.vue";
+import { AppAccount } from "./appAccount";
 
 const showJazzInspector = import.meta.env.VITE_SHOW_JAZZ_INSPECTOR === "true";
 const syncConfig = {
@@ -11,7 +12,7 @@ const syncConfig = {
 </script>
 
 <template>
-  <JazzVueProvider :sync="syncConfig">
+  <JazzVueProvider :sync="syncConfig" :AccountSchema="AppAccount">
     <PasskeyAuthBootstrap />
     <router-view />
     <jazz-inspector v-if="showJazzInspector" />

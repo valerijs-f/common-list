@@ -1,22 +1,28 @@
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Bars3Icon, PencilSquareIcon, ShareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
-import { Account, co } from "jazz-tools";
-import { useAccount, useCoState } from "community-jazz-vue";
+import { CoValueLoadingState, co, deleteCoValues } from "jazz-tools";
+import { useAccount, useAgent, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle, useFocus } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
+import { AppAccount } from "./appAccount";
+import VisitedListRow from "./components/VisitedListRow.vue";
 import { ListDocument, ListItem } from "./schema";
 
 const route = useRoute();
+const router = useRouter();
+const agent = useAgent();
 
 function paramListId(): string | undefined {
   const raw = route.params.listId;
   return typeof raw === "string" ? raw : undefined;
 }
 
-const me = useAccount(Account, { resolve: { profile: true } });
+const me = useAccount(AppAccount, {
+  resolve: { profile: true, root: { visitedListIds: true } },
+});
 const authorName = computed(() => {
   const m = me.value;
   if (!m?.$isLoaded) return "";
@@ -76,6 +82,97 @@ const canEditListName = computed(() => {
 
 const listReady = computed(() => listDocument.value?.$isLoaded === true);
 
+const visitedIdsReady = computed(() => {
+  const m = me.value;
+  if (!m || !m.$isLoaded) return false;
+  if (!m.root.$isLoaded) return false;
+  const ids = m.root.visitedListIds;
+  return ids.$isLoaded === true;
+});
+
+const visitedListIds = computed(() => {
+  const m = me.value;
+  if (!m || !m.$isLoaded || !m.root.$isLoaded) return [] as string[];
+  const ids = m.root.visitedListIds;
+  if (!ids.$isLoaded) return [];
+  return [...ids];
+});
+
+watch(
+  () => [listId.value, listReady.value, visitedIdsReady.value] as const,
+  ([id, ready, vReady]) => {
+    if (!id || !ready || !vReady) return;
+    const m = me.value;
+    if (!m || !m.$isLoaded || !m.root.$isLoaded) return;
+    const ids = m.root.visitedListIds;
+    if (!ids.$isLoaded) return;
+    ids.$jazz.remove((x) => x === id);
+    ids.$jazz.unshift(id);
+  },
+);
+
+function removeIdFromVisited(id: string) {
+  const m = me.value;
+  if (!m || !m.$isLoaded || !m.root.$isLoaded) return;
+  const ids = m.root.visitedListIds;
+  if (!ids.$isLoaded) return;
+  ids.$jazz.remove((x) => x === id);
+}
+
+/** When we delete a list locally, a DELETED subscription update may still fire — don’t show the “owner removed” toast for that. */
+const suppressOwnerDeletedNoticeFor = new Set<string>();
+
+async function permanentlyDeleteList(id: string) {
+  suppressOwnerDeletedNoticeFor.add(id);
+  try {
+    await deleteCoValues(ListDocument, id, {
+      resolve: { items: { $each: true } },
+      loadAs: agent,
+    });
+  } finally {
+    setTimeout(() => suppressOwnerDeletedNoticeFor.delete(id), 30_000);
+  }
+  removeIdFromVisited(id);
+  if (listId.value === id) await router.replace({ name: "list" });
+}
+
+const ownerRemovedListNotice = ref<string | null>(null);
+let ownerNoticeClear: ReturnType<typeof setTimeout> | undefined;
+
+function dismissOwnerNotice() {
+  if (ownerNoticeClear) {
+    clearTimeout(ownerNoticeClear);
+    ownerNoticeClear = undefined;
+  }
+  ownerRemovedListNotice.value = null;
+}
+
+function notifyOwnerDeletedList() {
+  ownerRemovedListNotice.value =
+    "The list owner deleted this list. It has been removed from your lists.";
+  if (ownerNoticeClear) clearTimeout(ownerNoticeClear);
+  ownerNoticeClear = setTimeout(dismissOwnerNotice, 8000);
+}
+
+function handleListDeletedByOwner(id: string) {
+  removeIdFromVisited(id);
+  if (!suppressOwnerDeletedNoticeFor.has(id)) notifyOwnerDeletedList();
+  if (listId.value === id) void router.replace({ name: "list" });
+}
+
+watch(
+  () => {
+    const id = listId.value;
+    const doc = listDocument.value;
+    if (!id || !doc || doc.$isLoaded) return null;
+    if (doc.$jazz.loadingState === CoValueLoadingState.DELETED) return id;
+    return null;
+  },
+  (deletedId) => {
+    if (deletedId) handleListDeletedByOwner(deletedId);
+  },
+);
+
 const editingListName = ref(false);
 const listNameDraft = ref("");
 
@@ -107,7 +204,7 @@ function saveListName() {
 const pageTitle = useTitle("List");
 watchEffect(() => {
   if (!listId.value) {
-    pageTitle.value = "Items";
+    pageTitle.value = "Lists";
     return;
   }
   const count = listItems.value.filter((t) => !t.completed).length;
@@ -221,6 +318,20 @@ useSortable(listItemsEl, listItems, {
 
 <template>
   <div class="mx-auto flex w-full max-w-md flex-col pb-4">
+    <div
+      v-if="ownerRemovedListNotice"
+      role="status"
+      class="mb-3 flex gap-2 rounded-lg border border-amber-500/35 bg-amber-950/50 px-3 py-2 text-sm text-amber-100"
+    >
+      <p class="min-w-0 flex-1 leading-snug">{{ ownerRemovedListNotice }}</p>
+      <button
+        type="button"
+        class="shrink-0 rounded text-amber-200/90 underline-offset-2 hover:text-white hover:underline"
+        @click="dismissOwnerNotice"
+      >
+        Dismiss
+      </button>
+    </div>
     <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
         <div v-if="listId" class="mb-6 space-y-3">
           <div v-if="listDocument?.$isLoaded && canEditListName && editingListName" class="space-y-2">
@@ -291,11 +402,30 @@ useSortable(listItemsEl, listItems, {
           </div>
         </div>
 
-        <div v-if="!listId" class="space-y-4 py-4 text-center">
+        <div v-if="!listId" class="space-y-4 py-2 text-left">
+          <h2 class="text-xl font-semibold text-white">Your lists</h2>
           <p class="text-gray-400 text-sm leading-relaxed">
-            No list is open. Open a shared link, or use
+            Lists you opened or created. Use
             <span class="font-medium text-gray-300">New list</span>
-            in the bar below.
+            below or open a shared link.
+          </p>
+          <p v-if="!visitedIdsReady" class="text-gray-500 text-sm py-4 text-center">Loading…</p>
+          <ul
+            v-else-if="visitedListIds.length > 0"
+            class="space-y-2"
+          >
+            <li v-for="vid in visitedListIds" :key="vid">
+              <VisitedListRow
+                :doc-id="vid"
+                :my-account-id="myAccountId"
+                :on-remove-from-visited="removeIdFromVisited"
+                :on-delete-list-permanently="permanentlyDeleteList"
+                :on-list-deleted-by-owner="handleListDeletedByOwner"
+              />
+            </li>
+          </ul>
+          <p v-else class="text-gray-500 text-sm text-center py-6">
+            No lists here yet.
           </p>
         </div>
 
