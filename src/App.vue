@@ -2,11 +2,13 @@
 import { ref, computed } from "vue";
 import { JazzVueProvider } from "community-jazz-vue";
 import "jazz-tools/inspector/register-custom-element";
+import PasskeyAuthGate from "./PasskeyAuthGate.vue";
 import TodoApp from "./TodoApp.vue";
 
 const isOnline = ref(true);
-// DEV is Vite’s built-in (true in dev server, false in prod). Use VITE_SHOW_JAZZ_INSPECTOR in .env to hide the inspector in dev (e.g. VITE_SHOW_JAZZ_INSPECTOR=false).
 const showJazzInspector = import.meta.env.VITE_SHOW_JAZZ_INSPECTOR;
+const passkeyAppName = "Vue Jazz Common Lists";
+const passkeyHostname = import.meta.env.VITE_JAZZ_PASSKEY_HOSTNAME || undefined;
 const syncConfig = computed(() => ({
   peer: import.meta.env.VITE_JAZZ_PEER_URL as `wss://${string}`,
   when: isOnline.value ? ("always" as const) : ("never" as const),
@@ -15,7 +17,9 @@ const syncConfig = computed(() => ({
 
 <template>
   <JazzVueProvider :sync="syncConfig">
-    <TodoApp v-model:is-online="isOnline" />
+    <PasskeyAuthGate :app-name="passkeyAppName" :app-hostname="passkeyHostname">
+      <TodoApp v-model:is-online="isOnline" />
+    </PasskeyAuthGate>
     <jazz-inspector v-if="showJazzInspector" />
   </JazzVueProvider>
 </template>

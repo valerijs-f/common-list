@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, watchEffect } from "vue";
-import { co, Group } from "jazz-tools";
-import { useCoState } from "community-jazz-vue";
+import { Account, co, Group } from "jazz-tools";
+import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useUrlSearchParams, useTitle, useFocus } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
 import { ToDo, ToDoList } from "./schema";
 
 const isOnline = defineModel<boolean>("isOnline", { required: true });
+
+const me = useAccount(Account, { resolve: { profile: true } });
+const authorName = computed(() => {
+  const m = me.value;
+  if (!m?.$isLoaded) return "";
+  const profile = m.profile;
+  if (!profile?.$isLoaded) return "";
+  const name = profile.name;
+  return typeof name === "string" ? name.trim() : "";
+});
 
 const newTitle = ref("");
 const { copy, copied } = useClipboard({ copiedDuring: 2000 });
@@ -49,11 +59,12 @@ const { focused: inputFocused } = useFocus(inputEl);
 function addTodo() {
   const list = todoList.value;
   const title = newTitle.value.trim();
-  if (!title || !list?.$isLoaded) return;
+  const author = authorName.value;
+  if (!title || !author || !list?.$isLoaded) return;
   const sorted = todos.value;
   const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
   const order = generateKeyBetween(lastOrder, null);
-  list.$jazz.push({ title, completed: false, order });
+  list.$jazz.push({ title, completed: false, order, author });
   newTitle.value = "";
   inputFocused.value = true;
 }
@@ -74,6 +85,8 @@ const copyLink = () => copy(window.location.href);
 const todoListEl = useTemplateRef<HTMLElement>("todoListEl");
 
 useSortable(todoListEl, todos, {
+  // List mount is delayed until `todoList` loads; without this, Sortable never inits (ref was null on mount).
+  watchElement: true,
   handle: ".drag-handle",
   animation: 150,
   onUpdate: (e) => {
@@ -145,7 +158,8 @@ useSortable(todoListEl, todos, {
             />
             <button
               type="submit"
-              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              :disabled="!authorName"
+              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add
             </button>
@@ -153,7 +167,7 @@ useSortable(todoListEl, todos, {
 
           <ul ref="todoListEl" class="space-y-2">
             <li
-              v-for="(todo, index) in todos"
+              v-for="todo in todos"
               :key="todo.$jazz.id"
               class="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800"
             >
@@ -173,15 +187,20 @@ useSortable(todoListEl, todos, {
                 @change="toggleTodo(todo)"
                 class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
               />
-              <span
-                class="flex-1"
-                :class="
-                  todo.completed
-                    ? 'line-through text-gray-500'
-                    : 'text-gray-200'
-                "
-              >
-                {{ todo.title }}
+              <span class="flex-1 min-w-0">
+                <span
+                  class="block"
+                  :class="
+                    todo.completed
+                      ? 'line-through text-gray-500'
+                      : 'text-gray-200'
+                  "
+                >
+                  {{ todo.title }}
+                </span>
+                <span class="block text-xs text-gray-500 mt-0.5 truncate">
+                  Added by {{ todo.author }}
+                </span>
               </span>
               <button
                 @click="deleteTodo(todo)"

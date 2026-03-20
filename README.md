@@ -4,6 +4,7 @@ A real-time, offline-capable To Do app built with [Vue 3](https://vuejs.org/), [
 
 ## Features
 
+- Passkey sign-up
 - Real-time sync across tabs and devices via Jazz Cloud
 - Offline support with an online/offline toggle
 - Drag-and-drop reordering via `useSortable`
