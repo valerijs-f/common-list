@@ -9,6 +9,10 @@ import { AppAccount } from "../appAccount";
 import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
 import { createNewListId } from "../lists/createNewList";
 import { appNavTabs, type AppNavIcon } from "../navigation/appNav";
+import UiButton from "../components/ui/UiButton.vue";
+import UiDialog from "../components/ui/UiDialog.vue";
+import UiDialogActions from "../components/ui/UiDialogActions.vue";
+import UiTextField from "../components/ui/UiTextField.vue";
 
 const router = useRouter();
 const me = useAccount(AppAccount, { resolve: { profile: true } });
@@ -19,7 +23,9 @@ const myAccountId = computed(() => {
   return m.$jazz.id;
 });
 
-const newListDialog = useTemplateRef<HTMLDialogElement>("newListDialog");
+const newListDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+  "newListDialog",
+);
 const newListName = ref("");
 
 function openNewListDialog() {
@@ -101,45 +107,33 @@ const navTabIcons: Record<AppNavIcon, Component> = {
       </div>
     </nav>
 
-    <dialog
+    <UiDialog
       ref="newListDialog"
-      class="fixed top-1/2 left-1/2 z-50 w-[min(100%,24rem)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-xl open:flex open:flex-col open:gap-4 backdrop:bg-black/70"
       aria-labelledby="new-list-dialog-title"
       @close="onNewListDialogClose"
     >
-      <h2 id="new-list-dialog-title" class="text-lg font-semibold text-white">
-        New list
-      </h2>
+      <template #title>
+        <h2 id="new-list-dialog-title" class="text-lg font-semibold text-white">
+          New list
+        </h2>
+      </template>
       <form class="flex flex-col gap-3" @submit.prevent="confirmNewList">
-        <label class="block text-sm text-gray-400" for="new-list-name">Name</label>
-        <input
+        <UiTextField
           id="new-list-name"
           v-model="newListName"
+          label="Name"
+          hint="Leave blank to use “Untitled list”. You can rename it later."
           type="text"
           placeholder="e.g. Groceries"
           autocomplete="off"
-          class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
-        <p class="text-xs text-gray-500">
-          Leave blank to use “Untitled list”. You can rename it later if you created the list.
-        </p>
-        <div class="flex flex-wrap justify-end gap-2 pt-2">
-          <button
-            type="button"
-            class="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700"
-            @click="cancelNewListDialog"
-          >
+        <UiDialogActions>
+          <UiButton variant="secondary" type="button" @click="cancelNewListDialog">
             Cancel
-          </button>
-          <button
-            type="submit"
-            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!myAccountId"
-          >
-            Create
-          </button>
-        </div>
+          </UiButton>
+          <UiButton type="submit" :disabled="!myAccountId">Create</UiButton>
+        </UiDialogActions>
       </form>
-    </dialog>
+    </UiDialog>
   </div>
 </template>

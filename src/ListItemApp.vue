@@ -4,11 +4,15 @@ import { useRoute, useRouter } from "vue-router";
 import { Bars3Icon, PencilSquareIcon, ShareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { CoValueLoadingState, co, deleteCoValues } from "jazz-tools";
 import { useAccount, useAgent, useCoState } from "community-jazz-vue";
-import { useClipboard, useTitle, useFocus } from "@vueuse/core";
+import { useClipboard, useTitle } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
 import { AppAccount } from "./appAccount";
 import VisitedListRow from "./components/VisitedListRow.vue";
+import UiButton from "./components/ui/UiButton.vue";
+import UiDialog from "./components/ui/UiDialog.vue";
+import UiDialogActions from "./components/ui/UiDialogActions.vue";
+import UiTextField from "./components/ui/UiTextField.vue";
 import { ListDocument, ListItem } from "./schema";
 
 const route = useRoute();
@@ -212,9 +216,8 @@ watchEffect(() => {
   pageTitle.value = count > 0 ? `(${count}) ${label}` : label;
 });
 
-// Auto-focus input after adding a list item
-const inputEl = useTemplateRef<HTMLInputElement>("inputEl");
-const { focused: inputFocused } = useFocus(inputEl);
+// Refocus task input after adding an item
+const newTaskField = useTemplateRef<{ focus: () => void }>("newTaskField");
 
 function addListItem() {
   const list = itemsCoList.value;
@@ -226,14 +229,16 @@ function addListItem() {
   const order = generateKeyBetween(lastOrder, null);
   list.$jazz.push({ title, completed: false, order, author });
   newTitle.value = "";
-  inputFocused.value = true;
+  newTaskField.value?.focus();
 }
 
 function toggleListItem(listItem: co.loaded<typeof ListItem>) {
   listItem.$jazz.set("completed", !listItem.completed);
 }
 
-const deleteConfirmDialog = useTemplateRef<HTMLDialogElement>("deleteConfirmDialog");
+const deleteConfirmDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+  "deleteConfirmDialog",
+);
 const pendingDeleteId = ref<string | null>(null);
 const pendingDeleteTitle = ref("");
 
@@ -324,51 +329,44 @@ useSortable(listItemsEl, listItems, {
       class="mb-3 flex gap-2 rounded-lg border border-amber-500/35 bg-amber-950/50 px-3 py-2 text-sm text-amber-100"
     >
       <p class="min-w-0 flex-1 leading-snug">{{ ownerRemovedListNotice }}</p>
-      <button
+      <UiButton
+        variant="bare"
         type="button"
-        class="shrink-0 rounded text-amber-200/90 underline-offset-2 hover:text-white hover:underline"
+        class="shrink-0 text-amber-200/90 underline-offset-2 hover:text-white hover:underline"
         @click="dismissOwnerNotice"
       >
         Dismiss
-      </button>
+      </UiButton>
     </div>
     <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
         <div v-if="listId" class="mb-6 space-y-3">
           <div v-if="listDocument?.$isLoaded && canEditListName && editingListName" class="space-y-2">
             <div class="flex justify-end">
-              <button
+              <UiButton
+                variant="icon"
                 type="button"
-                class="shrink-0 rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                class="shrink-0"
                 aria-label="Share list"
                 title="Share list"
                 @click="shareOrCopy"
               >
                 <ShareIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
+              </UiButton>
             </div>
-            <label class="sr-only" for="list-name-edit">List name</label>
-            <input
+            <UiTextField
               id="list-name-edit"
               v-model="listNameDraft"
+              label="List name"
+              label-class="sr-only"
+              input-class="text-2xl font-bold"
               type="text"
-              class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-2xl font-bold text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="List name"
             />
             <div class="flex flex-wrap gap-2">
-              <button
-                type="button"
-                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                @click="saveListName"
-              >
-                Save name
-              </button>
-              <button
-                type="button"
-                class="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700"
-                @click="cancelEditListName"
-              >
+              <UiButton type="button" @click="saveListName">Save name</UiButton>
+              <UiButton variant="secondary" type="button" @click="cancelEditListName">
                 Cancel
-              </button>
+              </UiButton>
             </div>
           </div>
           <div v-else class="flex items-start justify-between gap-3">
@@ -379,25 +377,25 @@ useSortable(listItemsEl, listItems, {
               {{ displayListName }}
             </h1>
             <div class="flex shrink-0 items-start gap-2">
-              <button
+              <UiButton
+                variant="icon"
                 type="button"
-                class="rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
                 aria-label="Share list"
                 title="Share list"
                 @click="shareOrCopy"
               >
                 <ShareIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
-              <button
+              </UiButton>
+              <UiButton
                 v-if="canEditListName"
+                variant="icon"
                 type="button"
-                class="rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
                 aria-label="Rename list"
                 title="Rename list"
                 @click="startEditListName"
               >
                 <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
+              </UiButton>
             </div>
           </div>
         </div>
@@ -438,19 +436,10 @@ useSortable(listItemsEl, listItems, {
 
         <template v-else>
           <form @submit.prevent="addListItem" class="mb-6 space-y-3">
-            <input
-              ref="inputEl"
-              v-model="newTitle"
-              placeholder="New task"
-              class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <button
-              type="submit"
-              :disabled="!authorName"
-              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <UiTextField ref="newTaskField" v-model="newTitle" placeholder="New task" />
+            <UiButton type="submit" full-width :disabled="!authorName">
               Add
-            </button>
+            </UiButton>
           </form>
 
           <ul ref="listItemsEl" class="space-y-2">
@@ -487,14 +476,15 @@ useSortable(listItemsEl, listItems, {
                   Added by {{ listItem.author }}
                 </span>
               </span>
-              <button
+              <UiButton
+                variant="bare"
                 type="button"
-                class="list-item-delete shrink-0 text-gray-500 hover:text-red-400 p-1 rounded transition-colors"
+                class="list-item-delete shrink-0 p-1 text-gray-500 transition-colors hover:text-red-400"
                 title="Delete"
                 @click.stop="requestDeleteListItem(listItem)"
               >
                 <XMarkIcon class="w-4 h-4" aria-hidden="true" />
-              </button>
+              </UiButton>
             </li>
           </ul>
 
@@ -506,15 +496,16 @@ useSortable(listItemsEl, listItems, {
       </div>
     </div>
 
-    <dialog
+    <UiDialog
       ref="deleteConfirmDialog"
-      class="fixed left-1/2 top-1/2 z-50 w-[min(100%,24rem)] max-h-[min(90vh,calc(100vh-2rem))] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-xl open:flex open:flex-col open:gap-4 [&::backdrop]:bg-black/70"
       aria-labelledby="delete-dialog-title"
       @close="onDeleteDialogClose"
     >
-      <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">
-        Delete this task?
-      </h2>
+      <template #title>
+        <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">
+          Delete this task?
+        </h2>
+      </template>
       <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
         <p
           class="min-w-0 truncate text-gray-200"
@@ -524,22 +515,15 @@ useSortable(listItemsEl, listItems, {
         </p>
         <p>Will be removed from the list. This can’t be undone.</p>
       </div>
-      <div class="flex flex-wrap justify-end gap-2 pt-2">
-        <button
-          type="button"
-          class="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700"
-          autofocus
-          @click="cancelDeleteDialog"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-          @click="confirmDeleteListItem"
-        >
-          Delete
-        </button>
-      </div>
-    </dialog>
+      <template #actions>
+        <UiDialogActions>
+          <UiButton variant="secondary" type="button" autofocus @click="cancelDeleteDialog">
+            Cancel
+          </UiButton>
+          <UiButton variant="danger" type="button" @click="confirmDeleteListItem">
+            Delete
+          </UiButton>
+        </UiDialogActions>
+      </template>
+    </UiDialog>
 </template>

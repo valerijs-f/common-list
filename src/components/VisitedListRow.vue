@@ -5,6 +5,9 @@ import { TrashIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { CoValueLoadingState } from "jazz-tools";
 import { useCoState } from "community-jazz-vue";
 import { ListDocument } from "../schema";
+import UiButton from "./ui/UiButton.vue";
+import UiDialog from "./ui/UiDialog.vue";
+import UiDialogActions from "./ui/UiDialogActions.vue";
 
 const props = defineProps<{
   docId: string;
@@ -38,7 +41,9 @@ watch(
   { immediate: true },
 );
 
-const actionDialog = useTemplateRef<HTMLDialogElement>("actionDialog");
+const actionDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+  "actionDialog",
+);
 const actionKind = ref<"remove" | "deleteForever">("remove");
 const actionBusy = ref(false);
 const actionError = ref<string | null>(null);
@@ -138,10 +143,8 @@ const confirmLabel = computed(() =>
   actionKind.value === "remove" ? "Remove" : "Delete forever",
 );
 
-const confirmClass = computed(() =>
-  actionKind.value === "remove"
-    ? "rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600"
-    : "rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700",
+const confirmVariant = computed(() =>
+  actionKind.value === "remove" ? "muted" : "danger",
 );
 </script>
 
@@ -159,37 +162,39 @@ const confirmClass = computed(() =>
       <span v-if="badgeLabel" class="text-xs text-gray-500">{{ badgeLabel }}</span>
     </RouterLink>
     <div class="flex shrink-0 flex-col justify-center gap-1 border-l border-gray-700 p-1">
-      <button
+      <UiButton
+        variant="iconGhost"
         type="button"
-        class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
         title="Remove from my lists"
         aria-label="Remove from my lists"
         @click="openRemoveDialog"
       >
         <XMarkIcon class="h-5 w-5" aria-hidden="true" />
-      </button>
-      <button
+      </UiButton>
+      <UiButton
         v-if="isOwner"
+        variant="iconGhost"
+        class="hover:text-red-400"
         type="button"
-        class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-red-400"
         title="Delete list for everyone"
         aria-label="Delete list for everyone"
         @click="openDeleteForeverDialog"
       >
         <TrashIcon class="h-5 w-5" aria-hidden="true" />
-      </button>
+      </UiButton>
     </div>
   </div>
 
-  <dialog
+  <UiDialog
     ref="actionDialog"
-    class="fixed left-1/2 top-1/2 z-50 w-[min(100%,24rem)] max-h-[min(90vh,calc(100vh-2rem))] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-xl open:flex open:flex-col open:gap-4 [&::backdrop]:bg-black/70"
     aria-labelledby="visit-action-dialog-title"
     @close="onActionDialogClose"
   >
-    <h2 id="visit-action-dialog-title" class="text-lg font-semibold text-white">
-      {{ dialogTitle }}
-    </h2>
+    <template #title>
+      <h2 id="visit-action-dialog-title" class="text-lg font-semibold text-white">
+        {{ dialogTitle }}
+      </h2>
+    </template>
     <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
       <p class="min-w-0 truncate text-gray-200" :title="titleForDialog">
         “{{ titleForDialog }}”
@@ -197,23 +202,25 @@ const confirmClass = computed(() =>
       <p>{{ dialogBody }}</p>
       <p v-if="actionError" class="text-red-400">{{ actionError }}</p>
     </div>
-    <div class="flex flex-wrap justify-end gap-2 pt-2">
-      <button
-        type="button"
-        class="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700 disabled:opacity-50"
-        :disabled="actionBusy"
-        @click="closeActionDialog"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        :class="confirmClass"
-        :disabled="actionBusy"
-        @click="confirmAction"
-      >
-        {{ confirmLabel }}
-      </button>
-    </div>
-  </dialog>
+    <template #actions>
+      <UiDialogActions>
+        <UiButton
+          variant="secondary"
+          type="button"
+          :disabled="actionBusy"
+          @click="closeActionDialog"
+        >
+          Cancel
+        </UiButton>
+        <UiButton
+          :variant="confirmVariant"
+          type="button"
+          :disabled="actionBusy"
+          @click="confirmAction"
+        >
+          {{ confirmLabel }}
+        </UiButton>
+      </UiDialogActions>
+    </template>
+  </UiDialog>
 </template>

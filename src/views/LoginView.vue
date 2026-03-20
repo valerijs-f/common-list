@@ -4,6 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import { MusicalNoteIcon } from "@heroicons/vue/24/solid";
 import { usePasskeyAuth } from "community-jazz-vue";
 import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "../auth/passkeyConfig";
+import UiButton from "../components/ui/UiButton.vue";
+import UiTextField from "../components/ui/UiTextField.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -103,19 +105,15 @@ watch(
       </div>
 
       <form class="space-y-3" @submit.prevent="handleSignUp">
-        <input
+        <UiTextField
           v-model="username"
           type="text"
           placeholder="Display name"
           autocomplete="name"
-          class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <button
-          type="submit"
-          class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
+        <UiButton type="submit" full-width>
           Sign up with passkey
-        </button>
+        </UiButton>
       </form>
 
       <div class="relative my-6">
@@ -127,13 +125,9 @@ watch(
         </div>
       </div>
 
-      <button
-        type="button"
-        class="w-full px-4 py-2 bg-gray-800 text-gray-200 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors font-medium"
-        @click="handleLogIn"
-      >
+      <UiButton variant="secondary" full-width type="button" @click="handleLogIn">
         Log in with existing account
-      </button>
+      </UiButton>
     </div>
   </div>
 </template>
