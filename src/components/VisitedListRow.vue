@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { RouterLink } from "vue-router";
-import { TrashIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { TrashIcon, XMarkIcon, BookmarkSlashIcon } from "@heroicons/vue/24/outline";
 import { CoValueLoadingState } from "jazz-tools";
 import { useCoState } from "community-jazz-vue";
 import { ListDocument } from "../schema";
@@ -79,7 +79,7 @@ const badgeLabel = computed(() => {
   const v = doc.value;
   if (!v?.$isLoaded) return "";
   if (!props.myAccountId) return "";
-  return v.createdByAccountId === props.myAccountId ? "Yours" : "Shared";
+  return v.createdByAccountId === props.myAccountId ? "Yours" : "Shared with you";
 });
 
 const isOwner = computed(() => {
@@ -169,7 +169,7 @@ const confirmVariant = computed(() =>
         aria-label="Remove from my lists"
         @click="openRemoveDialog"
       >
-        <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+        <BookmarkSlashIcon class="h-5 w-5" aria-hidden="true" />
       </UiButton>
       <UiButton
         v-if="isOwner"
