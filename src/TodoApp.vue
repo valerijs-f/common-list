@@ -7,8 +7,6 @@ import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useS
 import { generateKeyBetween } from "fractional-indexing";
 import { ToDo, ToDoList } from "./schema";
 
-const isOnline = defineModel<boolean>("isOnline", { required: true });
-
 const me = useAccount(Account, { resolve: { profile: true } });
 const authorName = computed(() => {
   const m = me.value;
@@ -111,29 +109,12 @@ useSortable(todoListEl, todos, {
   <div class="min-h-screen bg-gray-950 flex items-start justify-center pt-16 px-4">
     <div class="w-full max-w-md">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center mb-8">
         <div class="flex items-center gap-2">
           <svg class="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
           </svg>
           <span class="text-white text-xl font-semibold tracking-tight">jazz</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-gray-300 text-sm">Online</span>
-          <button
-            @click="isOnline = !isOnline"
-            :class="[
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              isOnline ? 'bg-blue-600' : 'bg-gray-600',
-            ]"
-          >
-            <span
-              :class="[
-                'inline-block h-4 w-4 rounded-full bg-white transition-transform',
-                isOnline ? 'translate-x-6' : 'translate-x-1',
-              ]"
-            />
-          </button>
         </div>
       </div>
 
