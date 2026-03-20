@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { MusicalNoteIcon } from "@heroicons/vue/24/solid";
 import { usePasskeyAuth } from "community-jazz-vue";
 import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "../auth/passkeyConfig";
 
@@ -83,11 +84,7 @@ watch(
       class="w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-8 shadow-xl"
     >
       <div class="flex items-center gap-2 justify-center mb-6">
-        <svg class="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-          <path
-            d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
-          />
-        </svg>
+        <MusicalNoteIcon class="w-8 h-8 text-blue-500" aria-hidden="true" />
         <h1 class="text-xl font-semibold text-white tracking-tight text-center">
           {{ PASSKEY_APP_NAME }}
         </h1>

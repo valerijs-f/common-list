@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import type { Component } from "vue";
 import { computed, ref, useTemplateRef } from "vue";
 import { RouterLink, useRouter } from "vue-router";
+import { ListBulletIcon, PlusIcon } from "@heroicons/vue/24/outline";
+import { MusicalNoteIcon } from "@heroicons/vue/24/solid";
 import { Account } from "jazz-tools";
 import { useAccount } from "community-jazz-vue";
 import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
@@ -40,16 +43,9 @@ function onNewListDialogClose() {
   newListName.value = "";
 }
 
-function iconPath(kind: AppNavIcon): string {
-  switch (kind) {
-    case "list":
-      return "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01";
-    default: {
-      const _exhaustive: never = kind;
-      return _exhaustive;
-    }
-  }
-}
+const navTabIcons: Record<AppNavIcon, Component> = {
+  list: ListBulletIcon,
+};
 </script>
 
 <template>
@@ -58,16 +54,10 @@ function iconPath(kind: AppNavIcon): string {
       class="sticky top-0 z-40 shrink-0 border-b border-gray-800 bg-gray-950/95 backdrop-blur-md supports-backdrop-filter:bg-gray-950/80 pt-[env(safe-area-inset-top,0px)]"
     >
       <div class="flex h-14 items-center gap-2 px-4">
-        <svg
+        <MusicalNoteIcon
           class="h-7 w-7 shrink-0 text-blue-500"
-          viewBox="0 0 24 24"
-          fill="currentColor"
           aria-hidden="true"
-        >
-          <path
-            d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"
-          />
-        </svg>
+        />
         <span class="truncate text-lg font-semibold tracking-tight text-white">
           {{ PASSKEY_APP_NAME }}
         </span>
@@ -92,18 +82,11 @@ function iconPath(kind: AppNavIcon): string {
           class="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium text-gray-500 transition-colors"
           active-class="text-blue-400"
         >
-          <svg
+          <component
+            :is="navTabIcons[tab.icon]"
             class="h-6 w-6 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
             aria-hidden="true"
-          >
-            <path :d="iconPath(tab.icon)" />
-          </svg>
+          />
           <span class="truncate px-1">{{ tab.label }}</span>
         </RouterLink>
         <button
@@ -112,18 +95,7 @@ function iconPath(kind: AppNavIcon): string {
           aria-label="Create new list"
           @click="openNewListDialog"
         >
-          <svg
-            class="h-6 w-6 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
+          <PlusIcon class="h-6 w-6 shrink-0" aria-hidden="true" />
           <span class="truncate px-1">New list</span>
         </button>
       </div>

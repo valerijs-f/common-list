@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
 import { useRoute } from "vue-router";
+import { Bars3Icon, PencilSquareIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { Account, co } from "jazz-tools";
 import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle, useFocus } from "@vueuse/core";
@@ -240,10 +241,7 @@ useSortable(listItemsEl, listItems, {
               title="Rename list"
               @click="startEditListName"
             >
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
+              <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -290,11 +288,7 @@ useSortable(listItemsEl, listItems, {
                 class="drag-handle cursor-grab active:cursor-grabbing text-gray-600 group-hover:text-gray-400 transition-colors select-none"
                 title="Drag to reorder"
               >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
-                  <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
-                  <circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
-                </svg>
+                <Bars3Icon class="w-4 h-4" aria-hidden="true" />
               </span>
               <input
                 type="checkbox"
@@ -324,9 +318,7 @@ useSortable(listItemsEl, listItems, {
                 title="Delete"
                 @click.stop="requestDeleteListItem(listItem)"
               >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
+                <XMarkIcon class="w-4 h-4" aria-hidden="true" />
               </button>
             </li>
           </ul>
