@@ -4,9 +4,9 @@ import "jazz-tools/inspector/register-custom-element";
 import PasskeyAuthBootstrap from "./auth/PasskeyAuthBootstrap.vue";
 import { AppAccount } from "./appAccount";
 
-const showJazzInspector = import.meta.env.VITE_SHOW_JAZZ_INSPECTOR === "true";
+const showJazzInspector = import.meta.env.ENABLE_JAZZ_INSPECTOR === "true";
 const syncConfig = {
-  peer: import.meta.env.VITE_JAZZ_PEER_URL as `wss://${string}`,
+  peer: import.meta.env.JAZZ_PEER_URL as `wss://${string}`,
   when: "always" as const,
 };
 </script>

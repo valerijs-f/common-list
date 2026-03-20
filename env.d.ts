@@ -9,9 +9,9 @@ declare module "vue-router" {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_JAZZ_PEER_URL?: string
-  readonly VITE_SHOW_JAZZ_INSPECTOR?: string
-  readonly VITE_JAZZ_PASSKEY_HOSTNAME?: string
+  readonly JAZZ_PEER_URL?: string
+  readonly ENABLE_JAZZ_INSPECTOR?: string
+  readonly JAZZ_PASSKEY_HOSTNAME?: string
 }
 
 interface ImportMeta {
