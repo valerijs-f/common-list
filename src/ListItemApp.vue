@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { Account, co, Group } from "jazz-tools";
+import { useRoute } from "vue-router";
+import { Account, co } from "jazz-tools";
 import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle, useFocus } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
-import { ListItem, ListItemList } from "./schema";
+import { ListDocument, ListItem } from "./schema";
 
 const route = useRoute();
-const router = useRouter();
 
 function paramListId(): string | undefined {
   const raw = route.params.listId;
@@ -26,45 +25,93 @@ const authorName = computed(() => {
   return typeof name === "string" ? name.trim() : "";
 });
 
+const myAccountId = computed(() => {
+  const m = me.value;
+  if (!m?.$isLoaded) return "";
+  return m.$jazz.id;
+});
+
 const newTitle = ref("");
 const { copy, copied } = useClipboard({ copiedDuring: 2000 });
 
 const listId = ref<string | undefined>(paramListId());
 
-// JazzProvider only renders children once context is ready,
-// so we can safely create the list here
-if (!listId.value) {
-  const group = Group.create();
-  group.addMember("everyone", "writer");
-  const newList = ListItemList.create([], { owner: group });
-  const id = newList.$jazz.id;
-  listId.value = id;
-  void router.replace({ name: "list", params: { listId: id } });
-}
-
 watch(
   () => route.params.listId,
   (id) => {
-    const nextId = typeof id === "string" ? id : undefined;
-    if (nextId && nextId !== listId.value) listId.value = nextId;
+    listId.value = typeof id === "string" ? id : undefined;
   },
 );
 
-const listItemList = useCoState(ListItemList, listId, {
-  resolve: { $each: true },
+const listDocument = useCoState(ListDocument, listId, {
+  resolve: { items: { $each: true } },
+});
+
+const itemsCoList = computed(() => {
+  const doc = listDocument.value;
+  if (doc?.$isLoaded && doc.items?.$isLoaded) return doc.items;
+  return null;
 });
 
 const listItems = computed(() => {
-  const list = listItemList.value;
-  if (!list?.$isLoaded) return [];
+  const list = itemsCoList.value;
+  if (!list) return [];
   return [...list].sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0));
 });
+
+const displayListName = computed(() => {
+  const doc = listDocument.value;
+  if (doc?.$isLoaded) return doc.name.trim().length > 0 ? doc.name : "Untitled list";
+  return "List";
+});
+
+const canEditListName = computed(() => {
+  const doc = listDocument.value;
+  if (!doc?.$isLoaded) return false;
+  const id = myAccountId.value;
+  if (!id) return false;
+  return doc.createdByAccountId === id;
+});
+
+const listReady = computed(() => listDocument.value?.$isLoaded === true);
+
+const editingListName = ref(false);
+const listNameDraft = ref("");
+
+watch(listId, () => {
+  editingListName.value = false;
+});
+
+function startEditListName() {
+  const doc = listDocument.value;
+  if (!doc?.$isLoaded) return;
+  listNameDraft.value = doc.name;
+  editingListName.value = true;
+}
+
+function cancelEditListName() {
+  editingListName.value = false;
+}
+
+function saveListName() {
+  const doc = listDocument.value;
+  if (!doc?.$isLoaded || !canEditListName.value) return;
+  const next =
+    listNameDraft.value.trim().length > 0 ? listNameDraft.value.trim() : "Untitled list";
+  doc.$jazz.set("name", next);
+  editingListName.value = false;
+}
 
 // Page title with incomplete list item count
 const pageTitle = useTitle("List");
 watchEffect(() => {
+  if (!listId.value) {
+    pageTitle.value = "Items";
+    return;
+  }
   const count = listItems.value.filter((t) => !t.completed).length;
-  pageTitle.value = count > 0 ? `(${count}) Items` : "Items";
+  const label = displayListName.value;
+  pageTitle.value = count > 0 ? `(${count}) ${label}` : label;
 });
 
 // Auto-focus input after adding a list item
@@ -72,10 +119,10 @@ const inputEl = useTemplateRef<HTMLInputElement>("inputEl");
 const { focused: inputFocused } = useFocus(inputEl);
 
 function addListItem() {
-  const list = listItemList.value;
+  const list = itemsCoList.value;
   const title = newTitle.value.trim();
   const author = authorName.value;
-  if (!title || !author || !list?.$isLoaded) return;
+  if (!title || !author || !list) return;
   const sorted = listItems.value;
   const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
   const order = generateKeyBetween(lastOrder, null);
@@ -113,8 +160,8 @@ function cancelDeleteDialog() {
 
 function confirmDeleteListItem() {
   const id = pendingDeleteId.value;
-  const list = listItemList.value;
-  if (id && list?.$isLoaded) {
+  const list = itemsCoList.value;
+  if (id && list) {
     const listIndex = [...list].findIndex((t) => t.$jazz.id === id);
     if (listIndex !== -1) list.$jazz.remove(listIndex);
   }
@@ -152,24 +199,65 @@ useSortable(listItemsEl, listItems, {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-950 flex items-start justify-center pt-16 px-4">
-    <div class="w-full max-w-md">
-      <!-- Header -->
-      <div class="flex items-center mb-8">
-        <div class="flex items-center gap-2">
-          <svg class="w-7 h-7 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-          </svg>
-          <span class="text-white text-xl font-semibold tracking-tight">jazz</span>
+  <div class="mx-auto flex w-full max-w-md flex-col pb-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+        <div v-if="listId" class="mb-6 space-y-3">
+          <div v-if="listDocument?.$isLoaded && canEditListName && editingListName" class="space-y-2">
+            <label class="sr-only" for="list-name-edit">List name</label>
+            <input
+              id="list-name-edit"
+              v-model="listNameDraft"
+              type="text"
+              class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-2xl font-bold text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="List name"
+            />
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                @click="saveListName"
+              >
+                Save name
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700"
+                @click="cancelEditListName"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+          <div v-else class="flex items-start justify-between gap-3">
+            <h1 class="min-w-0 flex-1 text-3xl font-bold text-white wrap-break-word">
+              {{ displayListName }}
+            </h1>
+            <button
+              v-if="canEditListName"
+              type="button"
+              class="shrink-0 rounded-lg border border-gray-600 p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+              aria-label="Rename list"
+              title="Rename list"
+              @click="startEditListName"
+            >
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- Card -->
-      <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
-        <h1 class="text-3xl font-bold text-white mb-6">List</h1>
+        <div v-if="!listId" class="space-y-4 py-4 text-center">
+          <p class="text-gray-400 text-sm leading-relaxed">
+            No list is open. Open a shared link, or use
+            <span class="font-medium text-gray-300">New list</span>
+            in the bar below.
+          </p>
+        </div>
 
         <div
-          v-if="!listItemList?.$isLoaded"
+          v-else-if="!listReady"
           class="text-gray-400 text-center py-8"
         >
           Loading...
@@ -301,5 +389,4 @@ useSortable(listItemsEl, listItems, {
         </button>
       </div>
     </dialog>
-  </div>
 </template>

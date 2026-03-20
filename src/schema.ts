@@ -6,4 +6,10 @@ export const ListItem = co.map({
   order: z.string(),
   author: z.string(),
 });
-export const ListItemList = co.list(ListItem);
+
+export const ListDocument = co.map({
+  name: z.string(),
+  /** Account id of whoever created the list; used to allow renaming only for them */
+  createdByAccountId: z.string(),
+  items: co.list(ListItem),
+});
