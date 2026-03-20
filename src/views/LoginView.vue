@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { usePasskeyAuth } from "community-jazz-vue";
+import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "../auth/passkeyConfig";
 
-const props = defineProps<{
-  appName: string;
-  appHostname?: string;
-}>();
+const route = useRoute();
+const router = useRouter();
 
 const auth = usePasskeyAuth({
-  appName: props.appName,
-  appHostname: props.appHostname,
+  appName: PASSKEY_APP_NAME,
+  appHostname: PASSKEY_HOSTNAME,
 });
 
 const username = ref("");
-/** Visible error (first sentence only). */
 const error = ref<string | null>(null);
 
 const isSignedIn = computed(() => auth.value.state === "signedIn");
@@ -57,14 +56,27 @@ async function handleLogIn() {
     error.value = readErrorMessage(err);
   }
 }
+
+function redirectAfterAuth() {
+  const raw = route.query.redirect;
+  const target =
+    typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//")
+      ? raw
+      : "/lists";
+  void router.replace(target);
+}
+
+watch(
+  isSignedIn,
+  (signed) => {
+    if (signed) redirectAfterAuth();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
-  <template v-if="isSignedIn">
-    <slot />
-  </template>
   <div
-    v-else
     class="min-h-screen bg-gray-950 flex items-center justify-center px-4"
   >
     <div
@@ -77,7 +89,7 @@ async function handleLogIn() {
           />
         </svg>
         <h1 class="text-xl font-semibold text-white tracking-tight text-center">
-          {{ appName }}
+          {{ PASSKEY_APP_NAME }}
         </h1>
       </div>
 

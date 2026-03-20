@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, useTemplateRef, watchEffect } from "vue";
+import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { Account, co, Group } from "jazz-tools";
 import { useAccount, useCoState } from "community-jazz-vue";
-import { useClipboard, useUrlSearchParams, useTitle, useFocus } from "@vueuse/core";
+import { useClipboard, useTitle, useFocus } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
 import { ToDo, ToDoList } from "./schema";
+
+const route = useRoute();
+const router = useRouter();
+
+function paramListId(): string | undefined {
+  const raw = route.params.listId;
+  return typeof raw === "string" ? raw : undefined;
+}
 
 const me = useAccount(Account, { resolve: { profile: true } });
 const authorName = computed(() => {
@@ -20,8 +29,7 @@ const authorName = computed(() => {
 const newTitle = ref("");
 const { copy, copied } = useClipboard({ copiedDuring: 2000 });
 
-const params = useUrlSearchParams("history");
-const listId = ref<string | undefined>(params.id as string | undefined);
+const listId = ref<string | undefined>(paramListId());
 
 // JazzProvider only renders children once context is ready,
 // so we can safely create the list here
@@ -29,9 +37,18 @@ if (!listId.value) {
   const group = Group.create();
   group.addMember("everyone", "writer");
   const newList = ToDoList.create([], { owner: group });
-  listId.value = newList.$jazz.id;
-  params.id = newList.$jazz.id;
+  const id = newList.$jazz.id;
+  listId.value = id;
+  void router.replace({ name: "list", params: { listId: id } });
 }
+
+watch(
+  () => route.params.listId,
+  (id) => {
+    const nextId = typeof id === "string" ? id : undefined;
+    if (nextId && nextId !== listId.value) listId.value = nextId;
+  },
+);
 
 const todoList = useCoState(ToDoList, listId, {
   resolve: { $each: true },
@@ -71,11 +88,37 @@ function toggleTodo(todo: co.loaded<typeof ToDo>) {
   todo.$jazz.set("completed", !todo.completed);
 }
 
-function deleteTodo(todo: co.loaded<typeof ToDo>) {
+const deleteConfirmDialog = useTemplateRef<HTMLDialogElement>("deleteConfirmDialog");
+const pendingDeleteId = ref<string | null>(null);
+const pendingDeleteTitle = ref("");
+
+function requestDeleteTodo(todo: co.loaded<typeof ToDo>) {
+  pendingDeleteId.value = todo.$jazz.id;
+  pendingDeleteTitle.value = todo.title;
+  deleteConfirmDialog.value?.showModal();
+}
+
+function clearPendingDelete() {
+  pendingDeleteId.value = null;
+  pendingDeleteTitle.value = "";
+}
+
+function onDeleteDialogClose() {
+  clearPendingDelete();
+}
+
+function cancelDeleteDialog() {
+  deleteConfirmDialog.value?.close();
+}
+
+function confirmDeleteTodo() {
+  const id = pendingDeleteId.value;
   const list = todoList.value;
-  if (!list?.$isLoaded) return;
-  const listIndex = [...list].findIndex((t) => t.$jazz.id === todo.$jazz.id);
-  if (listIndex !== -1) list.$jazz.remove(listIndex);
+  if (id && list?.$isLoaded) {
+    const listIndex = [...list].findIndex((t) => t.$jazz.id === id);
+    if (listIndex !== -1) list.$jazz.remove(listIndex);
+  }
+  deleteConfirmDialog.value?.close();
 }
 
 const copyLink = () => copy(window.location.href);
@@ -86,6 +129,9 @@ useSortable(todoListEl, todos, {
   // List mount is delayed until `todoList` loads; without this, Sortable never inits (ref was null on mount).
   watchElement: true,
   handle: ".drag-handle",
+  /** Let delete / other controls receive clicks without Sortable interfering */
+  filter: "button, .todo-delete",
+  preventOnFilter: true,
   animation: 150,
   onUpdate: (e) => {
     // Revert SortableJS DOM manipulation — let Vue re-render from sorted order
@@ -170,7 +216,8 @@ useSortable(todoListEl, todos, {
               />
               <span class="flex-1 min-w-0">
                 <span
-                  class="block"
+                  class="block min-w-0 truncate"
+                  :title="todo.title"
                   :class="
                     todo.completed
                       ? 'line-through text-gray-500'
@@ -184,9 +231,10 @@ useSortable(todoListEl, todos, {
                 </span>
               </span>
               <button
-                @click="deleteTodo(todo)"
-                class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-red-400 p-1"
+                type="button"
+                class="todo-delete shrink-0 text-gray-500 hover:text-red-400 p-1 rounded transition-colors"
                 title="Delete"
+                @click.stop="requestDeleteTodo(todo)"
               >
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6L6 18M6 6l12 12" />
@@ -216,5 +264,42 @@ useSortable(todoListEl, todos, {
         </template>
       </div>
     </div>
+
+    <dialog
+      ref="deleteConfirmDialog"
+      class="fixed left-1/2 top-1/2 z-50 w-[min(100%,24rem)] max-h-[min(90vh,calc(100vh-2rem))] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-xl open:flex open:flex-col open:gap-4 [&::backdrop]:bg-black/70"
+      aria-labelledby="delete-dialog-title"
+      @close="onDeleteDialogClose"
+    >
+      <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">
+        Delete this task?
+      </h2>
+      <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
+        <p
+          class="min-w-0 truncate text-gray-200"
+          :title="pendingDeleteTitle"
+        >
+          “{{ pendingDeleteTitle }}”
+        </p>
+        <p>Will be removed from the list. This can’t be undone.</p>
+      </div>
+      <div class="flex flex-wrap justify-end gap-2 pt-2">
+        <button
+          type="button"
+          class="rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-gray-700"
+          autofocus
+          @click="cancelDeleteDialog"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+          @click="confirmDeleteTodo"
+        >
+          Delete
+        </button>
+      </div>
+    </dialog>
   </div>
 </template>
