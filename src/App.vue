@@ -6,7 +6,7 @@ import PasskeyAuthGate from "./PasskeyAuthGate.vue";
 import TodoApp from "./TodoApp.vue";
 
 const isOnline = ref(true);
-const showJazzInspector = import.meta.env.VITE_SHOW_JAZZ_INSPECTOR;
+const showJazzInspector = import.meta.env.VITE_SHOW_JAZZ_INSPECTOR === "true";
 const passkeyAppName = "Vue Jazz Common Lists";
 const passkeyHostname = import.meta.env.VITE_JAZZ_PASSKEY_HOSTNAME || undefined;
 const syncConfig = computed(() => ({
