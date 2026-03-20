@@ -64,7 +64,7 @@ const listItems = computed(() => {
 const pageTitle = useTitle("List");
 watchEffect(() => {
   const count = listItems.value.filter((t) => !t.completed).length;
-  pageTitle.value = count > 0 ? `(${count}) List` : "List";
+  pageTitle.value = count > 0 ? `(${count}) Items` : "Items";
 });
 
 // Auto-focus input after adding a list item
