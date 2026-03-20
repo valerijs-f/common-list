@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useListItemApp } from "./composables/useListItemApp";
 import OwnerRemovedNoticeBanner from "./components/list/OwnerRemovedNoticeBanner.vue";
-import ListItemAppHeader from "./components/list/ListItemAppHeader.vue";
-import ListItemAppVisitedPanel from "./components/list/ListItemAppVisitedPanel.vue";
-import ListItemTaskRow from "./components/list/ListItemTaskRow.vue";
+import ListHeader from "./components/list/ListHeader.vue";
+import VisitedListsPanel from "./components/list/VisitedListsPanel.vue";
+import ListItemRow from "./components/list/ListItemRow.vue";
 import UiButton from "./components/ui/UiButton.vue";
 import UiDialog from "./components/ui/UiDialog.vue";
 import UiDialogActions from "./components/ui/UiDialogActions.vue";
@@ -61,7 +61,7 @@ const {
     />
     <div class="rounded-xl border border-gray-700 bg-gray-900 p-6">
       <div v-if="listId" class="mb-6 space-y-3">
-        <ListItemAppHeader
+        <ListHeader
           v-model:list-name-draft="listNameDraft"
           :display-list-name="displayListName"
           :list-document-loaded="listDocumentLoaded"
@@ -74,7 +74,7 @@ const {
         />
       </div>
 
-      <ListItemAppVisitedPanel
+      <VisitedListsPanel
         v-if="!listId"
         :visited-ids-ready="visitedIdsReady"
         :visited-list-ids="visitedListIds"
@@ -93,7 +93,7 @@ const {
         </form>
 
         <ul ref="listItemsEl" class="space-y-2">
-          <ListItemTaskRow
+          <ListItemRow
             v-for="listItem in listItems"
             :key="listItem.$jazz.id"
             :list-item="listItem"

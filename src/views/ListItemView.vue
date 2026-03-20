@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ListItemApp from "../ListItemApp.vue";
+import SharedListApp from "../SharedListApp.vue";
 </script>
 
 <template>
-  <ListItemApp />
+  <SharedListApp />
 </template>

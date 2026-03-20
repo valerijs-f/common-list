@@ -22,7 +22,18 @@ const emit = defineEmits<{
 
 <template>
   <div v-if="listDocumentLoaded && canEditListName && editingListName" class="space-y-2">
-    <div class="flex justify-end">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <UiTextField
+          id="list-name-edit"
+          v-model="listNameDraft"
+          label="List name"
+          label-class="sr-only"
+          input-class="text-2xl font-bold"
+          type="text"
+          placeholder="List name"
+        />
+      </div>
       <UiButton
         variant="icon"
         type="button"
@@ -34,15 +45,6 @@ const emit = defineEmits<{
         <ShareIcon class="h-5 w-5" aria-hidden="true" />
       </UiButton>
     </div>
-    <UiTextField
-      id="list-name-edit"
-      v-model="listNameDraft"
-      label="List name"
-      label-class="sr-only"
-      input-class="text-2xl font-bold"
-      type="text"
-      placeholder="List name"
-    />
     <div class="flex flex-wrap gap-2">
       <UiButton type="button" @click="emit('saveName')">Save name</UiButton>
       <UiButton variant="secondary" type="button" @click="emit('cancelRename')">
@@ -51,19 +53,10 @@ const emit = defineEmits<{
     </div>
   </div>
   <div v-else class="flex items-start justify-between gap-3">
-    <h1 class="min-w-0 flex-1 truncate text-3xl font-bold text-white" :title="displayListName">
+    <h1 class="min-w-0 flex-1 truncate text-2xl font-bold text-white" :title="displayListName">
       {{ displayListName }}
     </h1>
     <div class="flex shrink-0 items-start gap-2">
-      <UiButton
-        variant="icon"
-        type="button"
-        aria-label="Share list"
-        title="Share list"
-        @click="emit('share')"
-      >
-        <ShareIcon class="h-5 w-5" aria-hidden="true" />
-      </UiButton>
       <UiButton
         v-if="canEditListName"
         variant="icon"
@@ -73,6 +66,15 @@ const emit = defineEmits<{
         @click="emit('startRename')"
       >
         <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
+      </UiButton>
+      <UiButton
+        variant="icon"
+        type="button"
+        aria-label="Share list"
+        title="Share list"
+        @click="emit('share')"
+      >
+        <ShareIcon class="h-5 w-5" aria-hidden="true" />
       </UiButton>
     </div>
   </div>
