@@ -1,0 +1,355 @@
+import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { CoValueLoadingState, co, deleteCoValues } from "jazz-tools";
+import { useAccount, useAgent, useCoState } from "community-jazz-vue";
+import { useClipboard, useTitle } from "@vueuse/core";
+import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
+import { generateKeyBetween } from "fractional-indexing";
+import { AppAccount } from "../appAccount";
+import { ListDocument, ListItem } from "../schema";
+
+export function useListItemApp() {
+  const route = useRoute();
+  const router = useRouter();
+  const agent = useAgent();
+
+  function paramListId(): string | undefined {
+    const raw = route.params.listId;
+    return typeof raw === "string" ? raw : undefined;
+  }
+
+  const me = useAccount(AppAccount, {
+    resolve: { profile: true, root: { visitedListIds: true } },
+  });
+  const authorName = computed(() => {
+    const m = me.value;
+    if (!m?.$isLoaded) return "";
+    const profile = m.profile;
+    if (!profile?.$isLoaded) return "";
+    const name = profile.name;
+    return typeof name === "string" ? name.trim() : "";
+  });
+
+  const myAccountId = computed(() => {
+    const m = me.value;
+    if (!m?.$isLoaded) return "";
+    return m.$jazz.id;
+  });
+
+  const newTitle = ref("");
+  const { copy } = useClipboard({ copiedDuring: 2000 });
+
+  const listId = ref<string | undefined>(paramListId());
+
+  watch(
+    () => route.params.listId,
+    (id) => {
+      listId.value = typeof id === "string" ? id : undefined;
+    },
+  );
+
+  const listDocument = useCoState(ListDocument, listId, {
+    resolve: { items: { $each: true } },
+  });
+
+  const itemsCoList = computed(() => {
+    const doc = listDocument.value;
+    if (doc?.$isLoaded && doc.items?.$isLoaded) return doc.items;
+    return null;
+  });
+
+  const listItems = computed(() => {
+    const list = itemsCoList.value;
+    if (!list) return [];
+    return [...list].sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0));
+  });
+
+  const displayListName = computed(() => {
+    const doc = listDocument.value;
+    if (doc?.$isLoaded) return doc.name.trim().length > 0 ? doc.name : "Untitled list";
+    return "List";
+  });
+
+  const canEditListName = computed(() => {
+    const doc = listDocument.value;
+    if (!doc?.$isLoaded) return false;
+    const id = myAccountId.value;
+    if (!id) return false;
+    return doc.createdByAccountId === id;
+  });
+
+  const listReady = computed(() => listDocument.value?.$isLoaded === true);
+
+  const listDocumentLoaded = computed(() => listDocument.value?.$isLoaded === true);
+
+  const visitedIdsReady = computed(() => {
+    const m = me.value;
+    if (!m || !m.$isLoaded) return false;
+    if (!m.root.$isLoaded) return false;
+    const ids = m.root.visitedListIds;
+    return ids.$isLoaded === true;
+  });
+
+  const visitedListIds = computed(() => {
+    const m = me.value;
+    if (!m || !m.$isLoaded || !m.root.$isLoaded) return [] as string[];
+    const ids = m.root.visitedListIds;
+    if (!ids.$isLoaded) return [];
+    return [...ids];
+  });
+
+  watch(
+    () => [listId.value, listReady.value, visitedIdsReady.value] as const,
+    ([id, ready, vReady]) => {
+      if (!id || !ready || !vReady) return;
+      const m = me.value;
+      if (!m || !m.$isLoaded || !m.root.$isLoaded) return;
+      const ids = m.root.visitedListIds;
+      if (!ids.$isLoaded) return;
+      ids.$jazz.remove((x) => x === id);
+      ids.$jazz.unshift(id);
+    },
+  );
+
+  function removeIdFromVisited(id: string) {
+    const m = me.value;
+    if (!m || !m.$isLoaded || !m.root.$isLoaded) return;
+    const ids = m.root.visitedListIds;
+    if (!ids.$isLoaded) return;
+    ids.$jazz.remove((x) => x === id);
+  }
+
+  /** When we delete a list locally, a DELETED subscription update may still fire — don’t show the “owner removed” toast for that. */
+  const suppressOwnerDeletedNoticeFor = new Set<string>();
+
+  async function permanentlyDeleteList(id: string) {
+    suppressOwnerDeletedNoticeFor.add(id);
+    try {
+      await deleteCoValues(ListDocument, id, {
+        resolve: { items: { $each: true } },
+        loadAs: agent,
+      });
+    } finally {
+      setTimeout(() => suppressOwnerDeletedNoticeFor.delete(id), 30_000);
+    }
+    removeIdFromVisited(id);
+    if (listId.value === id) await router.replace({ name: "list" });
+  }
+
+  const ownerRemovedListNotice = ref<string | null>(null);
+  let ownerNoticeClear: ReturnType<typeof setTimeout> | undefined;
+
+  function dismissOwnerNotice() {
+    if (ownerNoticeClear) {
+      clearTimeout(ownerNoticeClear);
+      ownerNoticeClear = undefined;
+    }
+    ownerRemovedListNotice.value = null;
+  }
+
+  function notifyOwnerDeletedList() {
+    ownerRemovedListNotice.value =
+      "The list owner deleted this list. It has been removed from your lists.";
+    if (ownerNoticeClear) clearTimeout(ownerNoticeClear);
+    ownerNoticeClear = setTimeout(dismissOwnerNotice, 8000);
+  }
+
+  function handleListDeletedByOwner(id: string) {
+    removeIdFromVisited(id);
+    if (!suppressOwnerDeletedNoticeFor.has(id)) notifyOwnerDeletedList();
+    if (listId.value === id) void router.replace({ name: "list" });
+  }
+
+  watch(
+    () => {
+      const id = listId.value;
+      const doc = listDocument.value;
+      if (!id || !doc || doc.$isLoaded) return null;
+      if (doc.$jazz.loadingState === CoValueLoadingState.DELETED) return id;
+      return null;
+    },
+    (deletedId) => {
+      if (deletedId) handleListDeletedByOwner(deletedId);
+    },
+  );
+
+  const editingListName = ref(false);
+  const listNameDraft = ref("");
+
+  watch(listId, () => {
+    editingListName.value = false;
+  });
+
+  function startEditListName() {
+    const doc = listDocument.value;
+    if (!doc?.$isLoaded) return;
+    listNameDraft.value = doc.name;
+    editingListName.value = true;
+  }
+
+  function cancelEditListName() {
+    editingListName.value = false;
+  }
+
+  function saveListName() {
+    const doc = listDocument.value;
+    if (!doc?.$isLoaded || !canEditListName.value) return;
+    const next =
+      listNameDraft.value.trim().length > 0 ? listNameDraft.value.trim() : "Untitled list";
+    doc.$jazz.set("name", next);
+    editingListName.value = false;
+  }
+
+  const pageTitle = useTitle("List");
+  watchEffect(() => {
+    if (!listId.value) {
+      pageTitle.value = "Lists";
+      return;
+    }
+    const count = listItems.value.filter((t) => !t.completed).length;
+    const label = displayListName.value;
+    pageTitle.value = count > 0 ? `(${count}) ${label}` : label;
+  });
+
+  const newTaskField = useTemplateRef<{ focus: () => void }>("newTaskField");
+
+  function addListItem() {
+    const list = itemsCoList.value;
+    const title = newTitle.value.trim();
+    const author = authorName.value;
+    if (!title || !author || !list) return;
+    const sorted = listItems.value;
+    const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
+    const order = generateKeyBetween(lastOrder, null);
+    list.$jazz.push({ title, completed: false, order, author });
+    newTitle.value = "";
+    newTaskField.value?.focus();
+  }
+
+  function toggleListItem(listItem: co.loaded<typeof ListItem>) {
+    listItem.$jazz.set("completed", !listItem.completed);
+  }
+
+  const deleteConfirmDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+    "deleteConfirmDialog",
+  );
+  const pendingDeleteId = ref<string | null>(null);
+  const pendingDeleteTitle = ref("");
+
+  function requestDeleteListItem(listItem: co.loaded<typeof ListItem>) {
+    pendingDeleteId.value = listItem.$jazz.id;
+    pendingDeleteTitle.value = listItem.title;
+    deleteConfirmDialog.value?.showModal();
+  }
+
+  function clearPendingDelete() {
+    pendingDeleteId.value = null;
+    pendingDeleteTitle.value = "";
+  }
+
+  function onDeleteDialogClose() {
+    clearPendingDelete();
+  }
+
+  function cancelDeleteDialog() {
+    deleteConfirmDialog.value?.close();
+  }
+
+  function confirmDeleteListItem() {
+    const id = pendingDeleteId.value;
+    const list = itemsCoList.value;
+    if (id && list) {
+      const listIndex = [...list].findIndex((t) => t.$jazz.id === id);
+      if (listIndex !== -1) list.$jazz.remove(listIndex);
+    }
+    deleteConfirmDialog.value?.close();
+  }
+
+  async function shareOrCopy() {
+    const url = window.location.href;
+    const title = displayListName.value;
+    const text = `${title}\n${url}`;
+
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      const data: ShareData = { title, text, url };
+      if (navigator.canShare && !navigator.canShare(data)) {
+        copy(url);
+        return;
+      }
+      try {
+        await navigator.share(data);
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        copy(url);
+      }
+      return;
+    }
+    copy(url);
+  }
+
+  const listItemsEl = useTemplateRef<HTMLElement>("listItemsEl");
+
+  useSortable(listItemsEl, listItems, {
+    // List mount is delayed until items load; without this, Sortable never inits (ref was null on mount).
+    watchElement: true,
+    handle: ".drag-handle",
+    /** Let delete / other controls receive clicks without Sortable interfering */
+    filter: "button, .list-item-delete",
+    preventOnFilter: true,
+    animation: 150,
+    onUpdate: (e) => {
+      removeNode(e.item);
+      insertNodeAt(e.from, e.item, e.oldIndex!);
+
+      if (e.oldIndex == null || e.newIndex == null) return;
+      const sorted = listItems.value;
+      const moved = sorted[e.oldIndex];
+      if (!moved) return;
+
+      const before =
+        e.newIndex > 0
+          ? (sorted[e.newIndex - (e.newIndex > e.oldIndex ? 0 : 1)]?.order ?? null)
+          : null;
+      const after =
+        e.newIndex < sorted.length - 1
+          ? (sorted[e.newIndex + (e.newIndex < e.oldIndex ? 0 : 1)]?.order ?? null)
+          : null;
+      moved.$jazz.set("order", generateKeyBetween(before, after));
+    },
+  });
+
+  return {
+    listId,
+    listDocumentLoaded,
+    listReady,
+    displayListName,
+    canEditListName,
+    editingListName,
+    listNameDraft,
+    startEditListName,
+    cancelEditListName,
+    saveListName,
+    shareOrCopy,
+    visitedIdsReady,
+    visitedListIds,
+    myAccountId,
+    removeIdFromVisited,
+    permanentlyDeleteList,
+    handleListDeletedByOwner,
+    ownerRemovedListNotice,
+    dismissOwnerNotice,
+    newTitle,
+    authorName,
+    newTaskField,
+    addListItem,
+    listItemsEl,
+    listItems,
+    toggleListItem,
+    requestDeleteListItem,
+    deleteConfirmDialog,
+    pendingDeleteTitle,
+    onDeleteDialogClose,
+    cancelDeleteDialog,
+    confirmDeleteListItem,
+  };
+}
