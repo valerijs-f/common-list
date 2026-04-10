@@ -1,5 +1,6 @@
 import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { isRawCoID } from "cojson";
 import { CoValueLoadingState, co } from "jazz-tools";
 import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle } from "@vueuse/core";
@@ -47,7 +48,12 @@ export function useListItemApp() {
     },
   );
 
-  const listDocument = useCoState(ListDocument, listId, {
+  const listIdForCoState = computed(() => {
+    const id = listId.value;
+    return id !== undefined && isRawCoID(id) ? id : undefined;
+  });
+
+  const listDocument = useCoState(ListDocument, listIdForCoState, {
     resolve: { items: { $each: true } },
   });
 
@@ -158,6 +164,19 @@ export function useListItemApp() {
     if (!takeSelfInitiatedListDelete(id)) notifyOwnerDeletedList();
     if (listId.value === id) void router.replace({ name: "list" });
   }
+
+  watch(
+    () => listId.value,
+    (id) => {
+      if (!id || isRawCoID(id)) return;
+      removeIdFromVisited(id);
+      showInaccessibleListNotice(
+        "This list could not be loaded. The link may be wrong or the list may no longer exist.",
+      );
+      void router.replace({ name: "list" });
+    },
+    { immediate: true },
+  );
 
   watch(
     () => {
