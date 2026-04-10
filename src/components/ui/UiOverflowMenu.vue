@@ -61,7 +61,7 @@ defineExpose({
     <div
       v-show="open"
       role="menu"
-      class="absolute z-50 mt-1 min-w-[11rem] rounded-lg border border-gray-700 bg-gray-900 py-1 shadow-xl"
+      class="absolute z-50 mt-1 min-w-44 rounded-lg border border-gray-700 bg-gray-900 py-1 shadow-xl"
       :class="props.align === 'end' ? 'right-0' : 'left-0'"
       @click="onPanelClick"
     >

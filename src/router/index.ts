@@ -5,6 +5,7 @@ import ProtectedLayout from "../layouts/ProtectedLayout.vue";
 import LoginView from "../views/LoginView.vue";
 import ListItemView from "../views/ListItemView.vue";
 import ListSettingsView from "../views/ListSettingsView.vue";
+import NotFoundView from "../views/NotFoundView.vue";
 
 function safeInternalPath(raw: unknown): string {
   if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//"))
@@ -41,6 +42,12 @@ const router = createRouter({
           component: ListItemView,
         },
       ],
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "notFound",
+      component: NotFoundView,
+      meta: { requiresAuth: false },
     },
   ],
 });
