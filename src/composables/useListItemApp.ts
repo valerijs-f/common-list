@@ -324,6 +324,7 @@ export function useListItemApp() {
   });
 
   function saveDetailTitle() {
+    if (!canSaveDetail.value) return;
     const id = detailListItemId.value;
     const accountId = myAccountId.value;
     const name = authorName.value;

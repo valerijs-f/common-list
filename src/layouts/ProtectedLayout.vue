@@ -13,6 +13,7 @@ import { AppAccount } from "../appAccount";
 import { passkeySignedIn } from "../auth/passkeyAuthState";
 import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
 import { createNewListId } from "../lists/createNewList";
+import { LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
 import UiButton from "../components/ui/UiButton.vue";
 import UiDialog from "../components/ui/UiDialog.vue";
 import UiDialogActions from "../components/ui/UiDialogActions.vue";
@@ -33,6 +34,10 @@ const newListDialog = useTemplateRef<{ showModal: () => void; close: () => void 
 );
 const newListName = ref("");
 
+const canCreateNewList = computed(() => {
+  return myAccountId.value !== "" && newListName.value.trim().length > 0;
+});
+
 function openNewListDialog() {
   newListName.value = "";
   newListDialog.value?.showModal();
@@ -44,8 +49,13 @@ function cancelNewListDialog() {
 
 function confirmNewList() {
   const accountId = myAccountId.value;
-  if (!accountId) return;
-  const id = createNewListId(newListName.value, accountId);
+  if (!accountId || !newListName.value.trim()) return;
+  let id: string;
+  try {
+    id = createNewListId(newListName.value, accountId);
+  } catch {
+    return;
+  }
   newListDialog.value?.close();
   void router.push({ name: "list", params: { listId: id } });
 }
@@ -147,16 +157,18 @@ async function confirmLogOut() {
           id="new-list-name"
           v-model="newListName"
           label="Name"
-          hint="Leave blank to use “Untitled list”. You can rename it later."
+          hint="You can change it later in list settings."
           type="text"
           placeholder="e.g. Groceries"
           autocomplete="off"
+          required
+          :maxlength="LIST_DOCUMENT_NAME_MAX_LENGTH"
         />
         <UiDialogActions>
           <UiButton variant="secondary" type="button" @click="cancelNewListDialog">
             Cancel
           </UiButton>
-          <UiButton type="submit" :disabled="!myAccountId">Create</UiButton>
+          <UiButton type="submit" :disabled="!canCreateNewList">Create</UiButton>
         </UiDialogActions>
       </form>
     </UiDialog>

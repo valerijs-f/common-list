@@ -5,7 +5,7 @@ import { useAccount, useAgent, useCoState } from "community-jazz-vue";
 import { useTitle } from "@vueuse/core";
 import { AppAccount } from "../appAccount";
 import { markListDeleteAsSelfInitiated } from "../lists/selfInitiatedListDelete";
-import { ListDocument } from "../schema";
+import { ListDocument, LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
 
 export function useListSettings() {
   const route = useRoute();
@@ -84,11 +84,26 @@ export function useListSettings() {
     { immediate: true },
   );
 
+  function normalizedListDocumentName(s: string): string {
+    return s.trim().slice(0, LIST_DOCUMENT_NAME_MAX_LENGTH);
+  }
+
+  const canSaveListName = computed(() => {
+    if (!isCreator.value || !listReady.value) return false;
+    const doc = listDocument.value;
+    if (!doc?.$isLoaded) return false;
+    const next = normalizedListDocumentName(listNameDraft.value);
+    if (!next) return false;
+    const stored = doc.name;
+    if (stored.trim().length > LIST_DOCUMENT_NAME_MAX_LENGTH) return true;
+    return next !== normalizedListDocumentName(stored);
+  });
+
   function saveListName() {
     const doc = listDocument.value;
-    if (!doc?.$isLoaded || !isCreator.value) return;
-    const next =
-      listNameDraft.value.trim().length > 0 ? listNameDraft.value.trim() : "Untitled list";
+    if (!doc?.$isLoaded || !isCreator.value || !canSaveListName.value) return;
+    const next = normalizedListDocumentName(listNameDraft.value);
+    if (!next) return;
     doc.$jazz.set("name", next);
   }
 
@@ -148,6 +163,7 @@ export function useListSettings() {
     displayListName,
     isCreator,
     listNameDraft,
+    canSaveListName,
     saveListName,
     openDeleteDialog,
     closeDeleteDialog,

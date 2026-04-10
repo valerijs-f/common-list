@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useListSettings } from "../composables/useListSettings";
+import { LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
 import UiBackLink from "../components/ui/UiBackLink.vue";
 import UiButton from "../components/ui/UiButton.vue";
 import UiDialog from "../components/ui/UiDialog.vue";
@@ -11,6 +12,7 @@ const {
   displayListName,
   isCreator,
   listNameDraft,
+  canSaveListName,
   saveListName,
   openDeleteDialog,
   closeDeleteDialog,
@@ -43,8 +45,9 @@ const {
             type="text"
             placeholder="List name"
             autocomplete="off"
+            :maxlength="LIST_DOCUMENT_NAME_MAX_LENGTH"
           />
-          <UiButton type="submit" full-width>Save name</UiButton>
+          <UiButton type="submit" full-width :disabled="!canSaveListName">Save name</UiButton>
         </form>
 
         <section class="mt-8 space-y-2 border-t border-gray-800 pt-6">
