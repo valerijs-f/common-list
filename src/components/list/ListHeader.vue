@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { Cog6ToothIcon, ShareIcon } from "@heroicons/vue/24/outline";
-import UiButton from "../ui/UiButton.vue";
+import UiOverflowMenu from "../ui/UiOverflowMenu.vue";
 
 defineProps<{
   displayListName: string;
-  listDocumentLoaded: boolean;
-  /** When set, show a link to list settings (creator only). */
+  /** When set, show list settings in the menu (creator only). */
   settingsListId: string | null;
+  /** Number of completed tasks (for “remove completed” visibility). */
+  completedTaskCount: number;
 }>();
 
 const emit = defineEmits<{
   share: [];
+  removeCompleted: [];
 }>();
 
+const menuItemClass =
+  "block w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800";
+
 const settingsLinkClass =
-  "inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-600 p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200";
+  "block w-full px-3 py-2 text-left text-sm text-gray-200 no-underline hover:bg-gray-800";
 </script>
 
 <template>
@@ -23,25 +27,27 @@ const settingsLinkClass =
     <h1 class="min-w-0 flex-1 truncate text-2xl font-bold text-white" :title="displayListName">
       {{ displayListName }}
     </h1>
-    <div class="flex shrink-0 items-start gap-2">
+    <UiOverflowMenu menu-aria-label="List actions" align="end">
+      <button type="button" role="menuitem" :class="menuItemClass" @click="emit('share')">
+        Share list
+      </button>
       <RouterLink
-        v-if="listDocumentLoaded && settingsListId"
+        v-if="settingsListId"
+        role="menuitem"
         :to="{ name: 'listSettings', params: { listId: settingsListId } }"
         :class="settingsLinkClass"
-        aria-label="List settings"
-        title="List settings"
       >
-        <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
+        List settings
       </RouterLink>
-      <UiButton
-        variant="icon"
+      <button
+        v-if="completedTaskCount > 0"
         type="button"
-        aria-label="Share list"
-        title="Share list"
-        @click="emit('share')"
+        role="menuitem"
+        :class="menuItemClass"
+        @click="emit('removeCompleted')"
       >
-        <ShareIcon class="h-5 w-5" aria-hidden="true" />
-      </UiButton>
-    </div>
+        Remove completed tasks
+      </button>
+    </UiOverflowMenu>
   </div>
 </template>

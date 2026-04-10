@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useListItemApp } from "./composables/useListItemApp";
 import { LIST_ITEM_TITLE_MAX_LENGTH } from "./schema";
+import { fabAddTaskSignal, signalFabRequestNewListDialog } from "./lib/fabBridge";
 import OwnerRemovedNoticeBanner from "./components/list/OwnerRemovedNoticeBanner.vue";
 import ListHeader from "./components/list/ListHeader.vue";
 import VisitedListsPanel from "./components/list/VisitedListsPanel.vue";
@@ -13,7 +15,6 @@ import UiTextField from "./components/ui/UiTextField.vue";
 
 const {
   listId,
-  listDocumentLoaded,
   listReady,
   displayListName,
   isListCreator,
@@ -27,10 +28,8 @@ const {
   dismissOwnerNotice,
   inaccessibleListNotice,
   dismissInaccessibleListNotice,
-  newTitle,
   authorName,
-  newTaskField,
-  addListItem,
+  addListItemWithTitle,
   listItemsEl,
   listItems,
   toggleListItem,
@@ -40,6 +39,13 @@ const {
   onDeleteDialogClose,
   cancelDeleteDialog,
   confirmDeleteListItem,
+  completedTaskCount,
+  completedRemovalDialog,
+  pendingCompletedRemovalIds,
+  requestRemoveAllCompleted,
+  onCompletedRemovalDialogClose,
+  cancelCompletedRemovalDialog,
+  confirmRemoveAllCompleted,
   detailDialog,
   detailTitle,
   detailAuthor,
@@ -51,6 +57,65 @@ const {
   saveDetailTitle,
   isListItemMine,
 } = useListItemApp();
+
+const fabNewTaskTitle = ref("");
+const fabAddTaskDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+  "fabAddTaskDialog",
+);
+const pendingOpenAddTaskFromFab = ref(false);
+
+const canSubmitFabTask = computed(
+  () =>
+    fabNewTaskTitle.value.trim().length > 0 &&
+    authorName.value !== "" &&
+    myAccountId.value !== "",
+);
+
+function openFabAddTaskDialog() {
+  fabNewTaskTitle.value = "";
+  fabAddTaskDialog.value?.showModal();
+}
+
+watch(fabAddTaskSignal, () => {
+  if (!listId.value) return;
+  if (listReady.value) {
+    openFabAddTaskDialog();
+  } else {
+    pendingOpenAddTaskFromFab.value = true;
+  }
+});
+
+watch([listId, listReady], () => {
+  if (!listId.value) {
+    pendingOpenAddTaskFromFab.value = false;
+    return;
+  }
+  if (pendingOpenAddTaskFromFab.value && listReady.value) {
+    pendingOpenAddTaskFromFab.value = false;
+    openFabAddTaskDialog();
+  }
+});
+
+function onFabAddTaskDialogClose() {
+  fabNewTaskTitle.value = "";
+}
+
+function submitFabAddTask() {
+  if (addListItemWithTitle(fabNewTaskTitle.value)) {
+    fabAddTaskDialog.value?.close();
+    fabNewTaskTitle.value = "";
+  }
+}
+
+function chooseCreateListInstead() {
+  fabAddTaskDialog.value?.close();
+  fabNewTaskTitle.value = "";
+  signalFabRequestNewListDialog();
+}
+
+function cancelFabAddTaskDialog() {
+  fabAddTaskDialog.value?.close();
+}
 </script>
 
 <template>
@@ -70,9 +135,10 @@ const {
       <div v-if="listId" class="mb-6 space-y-3">
         <ListHeader
           :display-list-name="displayListName"
-          :list-document-loaded="listDocumentLoaded"
           :settings-list-id="isListCreator && listId ? listId : null"
+          :completed-task-count="completedTaskCount"
           @share="shareOrCopy"
+          @remove-completed="requestRemoveAllCompleted"
         />
       </div>
 
@@ -88,18 +154,6 @@ const {
       <div v-else-if="!listReady" class="py-8 text-center text-gray-400">Loading...</div>
 
       <template v-else>
-        <form class="mb-6 space-y-3" @submit.prevent="addListItem">
-          <UiTextField
-            ref="newTaskField"
-            v-model="newTitle"
-            placeholder="New task"
-            :maxlength="LIST_ITEM_TITLE_MAX_LENGTH"
-          />
-          <UiButton type="submit" full-width :disabled="!authorName || !myAccountId">
-            Add
-          </UiButton>
-        </form>
-
         <ul ref="listItemsEl" class="space-y-2">
           <ListItemRow
             v-for="listItem in listItems"
@@ -113,10 +167,46 @@ const {
         </ul>
 
         <p v-if="listItems.length === 0" class="py-4 text-center text-gray-500">
-          No list items yet. Add one above!
+          No list items yet. Tap the + button below to add one.
         </p>
       </template>
     </div>
+
+    <UiDialog
+      ref="fabAddTaskDialog"
+      aria-labelledby="fab-add-task-title"
+      @close="onFabAddTaskDialogClose"
+    >
+      <template #title>
+        <h2 id="fab-add-task-title" class="text-lg font-semibold text-white">New task</h2>
+      </template>
+      <form class="flex flex-col gap-3" @submit.prevent="submitFabAddTask">
+        <UiTextField
+          id="fab-new-task"
+          v-model="fabNewTaskTitle"
+          label="Item"
+          type="text"
+          placeholder="What should be added?"
+          autocomplete="off"
+          :maxlength="LIST_ITEM_TITLE_MAX_LENGTH"
+        />
+        <p class="text-left">
+          <button
+            type="button"
+            class="text-sm text-gray-400 underline decoration-gray-600 underline-offset-2 hover:text-gray-300"
+            @click="chooseCreateListInstead"
+          >
+            Create new list instead
+          </button>
+        </p>
+        <UiDialogActions>
+          <UiButton variant="secondary" type="button" @click="cancelFabAddTaskDialog">
+            Cancel
+          </UiButton>
+          <UiButton type="submit" :disabled="!canSubmitFabTask">Add</UiButton>
+        </UiDialogActions>
+      </form>
+    </UiDialog>
 
     <UiDialog
       ref="detailDialog"
@@ -183,6 +273,34 @@ const {
           </UiButton>
           <UiButton variant="danger" type="button" @click="confirmDeleteListItem">
             Delete
+          </UiButton>
+        </UiDialogActions>
+      </template>
+    </UiDialog>
+
+    <UiDialog
+      ref="completedRemovalDialog"
+      aria-labelledby="completed-removal-title"
+      @close="onCompletedRemovalDialogClose"
+    >
+      <template #title>
+        <h2 id="completed-removal-title" class="text-lg font-semibold text-white">
+          Remove {{ pendingCompletedRemovalIds?.length ?? 0 }} completed tasks?
+        </h2>
+      </template>
+      <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
+        <p>
+          Tasks you complete after this dialog opened are not included. Only tasks that are still
+          completed when you confirm will be removed. This can’t be undone.
+        </p>
+      </div>
+      <template #actions>
+        <UiDialogActions>
+          <UiButton variant="secondary" type="button" autofocus @click="cancelCompletedRemovalDialog">
+            Cancel
+          </UiButton>
+          <UiButton variant="danger" type="button" @click="confirmRemoveAllCompleted">
+            Remove
           </UiButton>
         </UiDialogActions>
       </template>

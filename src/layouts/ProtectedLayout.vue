@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from "vue";
-import { RouterLink, useRouter } from "vue-router";
+import { computed, ref, useTemplateRef, watch } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { until } from "@vueuse/core";
 import {
   ArrowLeftStartOnRectangleIcon,
@@ -14,12 +14,17 @@ import { passkeySignedIn } from "../auth/passkeyAuthState";
 import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
 import { createNewListId } from "../lists/createNewList";
 import { LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
+import {
+  fabRequestNewListDialogSignal,
+  signalFabAddTask,
+} from "../lib/fabBridge";
 import UiButton from "../components/ui/UiButton.vue";
 import UiDialog from "../components/ui/UiDialog.vue";
 import UiDialogActions from "../components/ui/UiDialogActions.vue";
 import UiTextField from "../components/ui/UiTextField.vue";
 
 const router = useRouter();
+const route = useRoute();
 const logOut = useLogOut();
 const me = useAccount(AppAccount, { resolve: { profile: true } });
 
@@ -62,6 +67,24 @@ function confirmNewList() {
 
 function onNewListDialogClose() {
   newListName.value = "";
+}
+
+watch(fabRequestNewListDialogSignal, () => {
+  openNewListDialog();
+});
+
+const fabOpensAddTask = computed(() => {
+  if (route.name !== "list") return false;
+  const id = route.params.listId;
+  return typeof id === "string" && id.length > 0;
+});
+
+function onCenterFabClick() {
+  if (fabOpensAddTask.value) {
+    signalFabAddTask();
+    return;
+  }
+  openNewListDialog();
 }
 
 const logoutDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
@@ -126,8 +149,8 @@ async function confirmLogOut() {
         <button
           type="button"
           class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:text-gray-300 active:text-blue-400 -outline-offset-2"
-          aria-label="Create new list"
-          @click="openNewListDialog"
+          :aria-label="fabOpensAddTask ? 'Add task' : 'Create new list'"
+          @click="onCenterFabClick"
         >
           <PlusIcon class="h-6 w-6 shrink-0" aria-hidden="true" />
         </button>

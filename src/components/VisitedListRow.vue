@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { RouterLink } from "vue-router";
-import { Cog6ToothIcon, BookmarkSlashIcon } from "@heroicons/vue/24/outline";
 import { CoValueLoadingState } from "jazz-tools";
 import { useCoState } from "community-jazz-vue";
 import { ListDocument } from "../schema";
-import UiButton from "./ui/UiButton.vue";
+import UiOverflowMenu from "./ui/UiOverflowMenu.vue";
 import UiDialog from "./ui/UiDialog.vue";
 import UiDialogActions from "./ui/UiDialogActions.vue";
 
@@ -86,8 +85,11 @@ const isOwner = computed(() => {
   return v.createdByAccountId === props.myAccountId;
 });
 
+const menuItemClass =
+  "block w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800";
+
 const settingsLinkClass =
-  "inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-gray-200";
+  "block w-full px-3 py-2 text-left text-sm text-gray-200 no-underline hover:bg-gray-800";
 
 function openRemoveDialog() {
   actionError.value = null;
@@ -131,25 +133,23 @@ async function confirmRemove() {
       }}</span>
       <span v-if="badgeLabel" class="text-xs text-gray-500">{{ badgeLabel }}</span>
     </RouterLink>
-    <div class="flex shrink-0 flex-col justify-center gap-1 border-l border-gray-700 p-1">
-      <UiButton
-        variant="iconGhost"
-        type="button"
-        title="Remove from my lists"
-        aria-label="Remove from my lists"
-        @click="openRemoveDialog"
-      >
-        <BookmarkSlashIcon class="h-5 w-5" aria-hidden="true" />
-      </UiButton>
-      <RouterLink
-        v-if="isOwner"
-        :to="{ name: 'listSettings', params: { listId: docId } }"
-        :class="settingsLinkClass"
-        title="List settings"
-        aria-label="List settings"
-      >
-        <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
-      </RouterLink>
+    <div
+      class="flex shrink-0 items-center px-1 py-2"
+      @click.stop
+    >
+      <UiOverflowMenu menu-aria-label="List row actions" align="end">
+        <button type="button" role="menuitem" :class="menuItemClass" @click="openRemoveDialog">
+          Remove from my lists
+        </button>
+        <RouterLink
+          v-if="isOwner"
+          role="menuitem"
+          :to="{ name: 'listSettings', params: { listId: docId } }"
+          :class="settingsLinkClass"
+        >
+          List settings
+        </RouterLink>
+      </UiOverflowMenu>
     </div>
   </div>
 

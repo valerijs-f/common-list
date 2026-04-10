@@ -36,7 +36,6 @@ export function useListItemApp() {
     return m.$jazz.id;
   });
 
-  const newTitle = ref("");
   const { copy } = useClipboard({ copiedDuring: 2000 });
 
   const listId = ref<string | undefined>(paramListId());
@@ -200,20 +199,17 @@ export function useListItemApp() {
     pageTitle.value = count > 0 ? `(${count}) ${label}` : label;
   });
 
-  const newTaskField = useTemplateRef<{ focus: () => void }>("newTaskField");
-
-  function addListItem() {
+  function addListItemWithTitle(rawTitle: string): boolean {
     const list = itemsCoList.value;
-    const title = newTitle.value.trim().slice(0, LIST_ITEM_TITLE_MAX_LENGTH);
+    const title = rawTitle.trim().slice(0, LIST_ITEM_TITLE_MAX_LENGTH);
     const author = authorName.value;
     const authorAccountId = myAccountId.value;
-    if (!title || !author || !authorAccountId || !list) return;
+    if (!title || !author || !authorAccountId || !list) return false;
     const sorted = listItems.value;
     const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
     const order = generateKeyBetween(lastOrder, null);
     list.$jazz.push({ title, completed: false, order, author, authorAccountId });
-    newTitle.value = "";
-    newTaskField.value?.focus();
+    return true;
   }
 
   function toggleListItem(listItem: co.loaded<typeof ListItem>) {
@@ -253,6 +249,58 @@ export function useListItemApp() {
       if (listIndex !== -1) list.$jazz.remove(listIndex);
     }
     deleteConfirmDialog.value?.close();
+  }
+
+  const completedTaskCount = computed(
+    () => listItems.value.filter((t) => t.completed).length,
+  );
+
+  const completedRemovalDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+    "completedRemovalDialog",
+  );
+  /** Snapshot of task IDs to clear; count for the modal is this array’s length (fixed at open). */
+  const pendingCompletedRemovalIds = ref<string[] | null>(null);
+
+  function requestRemoveAllCompleted() {
+    const ids = listItems.value.filter((t) => t.completed).map((t) => t.$jazz.id);
+    if (ids.length === 0) return;
+    pendingCompletedRemovalIds.value = ids;
+    completedRemovalDialog.value?.showModal();
+  }
+
+  function clearPendingCompletedRemoval() {
+    pendingCompletedRemovalIds.value = null;
+  }
+
+  function onCompletedRemovalDialogClose() {
+    clearPendingCompletedRemoval();
+  }
+
+  function cancelCompletedRemovalDialog() {
+    completedRemovalDialog.value?.close();
+  }
+
+  function confirmRemoveAllCompleted() {
+    const ids = pendingCompletedRemovalIds.value;
+    const list = itemsCoList.value;
+    if (!ids?.length || !list) {
+      completedRemovalDialog.value?.close();
+      clearPendingCompletedRemoval();
+      return;
+    }
+    const idSet = new Set(ids);
+    const arr = [...list];
+    const indices: number[] = [];
+    for (let i = 0; i < arr.length; i++) {
+      const item = arr[i]!;
+      if (idSet.has(item.$jazz.id) && item.completed) indices.push(i);
+    }
+    indices.sort((a, b) => b - a);
+    for (const idx of indices) {
+      list.$jazz.remove(idx);
+    }
+    completedRemovalDialog.value?.close();
+    clearPendingCompletedRemoval();
   }
 
   const detailDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("detailDialog");
@@ -377,8 +425,8 @@ export function useListItemApp() {
     // List mount is delayed until items load; without this, Sortable never inits (ref was null on mount).
     watchElement: true,
     handle: ".drag-handle",
-    /** Let delete / other controls receive clicks without Sortable interfering */
-    filter: "button, .list-item-delete",
+    /** Let delete / overflow menu receive clicks without Sortable interfering */
+    filter: "button, .list-item-delete, .list-item-menu",
     preventOnFilter: true,
     animation: 150,
     onUpdate: (e) => {
@@ -418,10 +466,8 @@ export function useListItemApp() {
     dismissOwnerNotice,
     inaccessibleListNotice,
     dismissInaccessibleListNotice,
-    newTitle,
     authorName,
-    newTaskField,
-    addListItem,
+    addListItemWithTitle,
     listItemsEl,
     listItems,
     toggleListItem,
@@ -431,6 +477,13 @@ export function useListItemApp() {
     onDeleteDialogClose,
     cancelDeleteDialog,
     confirmDeleteListItem,
+    completedTaskCount,
+    completedRemovalDialog,
+    pendingCompletedRemovalIds,
+    requestRemoveAllCompleted,
+    onCompletedRemovalDialogClose,
+    cancelCompletedRemovalDialog,
+    confirmRemoveAllCompleted,
     detailDialog,
     detailTitle,
     detailAuthor,
