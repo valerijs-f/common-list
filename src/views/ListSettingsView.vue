@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { RouterLink } from "vue-router";
-import { ChevronLeftIcon } from "@heroicons/vue/24/outline";
 import { useListSettings } from "../composables/useListSettings";
+import UiBackLink from "../components/ui/UiBackLink.vue";
 import UiButton from "../components/ui/UiButton.vue";
 import UiDialog from "../components/ui/UiDialog.vue";
 import UiDialogActions from "../components/ui/UiDialogActions.vue";
 import UiTextField from "../components/ui/UiTextField.vue";
 
 const {
-  listId,
   listReady,
   displayListName,
   isCreator,
@@ -27,16 +25,7 @@ const {
 
 <template>
   <div class="mx-auto flex w-full max-w-md flex-col pb-4">
-    <div class="mb-4">
-      <RouterLink
-        v-if="listId"
-        :to="{ name: 'list', params: { listId: String(listId) } }"
-        class="inline-flex items-center gap-1 text-sm text-gray-400 transition-colors hover:text-white"
-      >
-        <ChevronLeftIcon class="h-4 w-4 shrink-0" aria-hidden="true" />
-        Back to list
-      </RouterLink>
-    </div>
+    <UiBackLink />
 
     <div class="rounded-xl border border-gray-700 bg-gray-900 p-6">
       <h1 class="text-xl font-semibold text-white">List settings</h1>
