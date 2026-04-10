@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => {
   const enableVueDevtools = env.ENABLE_VUE_DEVTOOLS === 'true'
 
   return {
+    /** Expose server-only .env keys the app reads via `import.meta.env` (Vite only ships `VITE_*` by default). */
+    define: {
+      "import.meta.env.JAZZ_PEER_URL": JSON.stringify(env.JAZZ_PEER_URL ?? ""),
+      "import.meta.env.ENABLE_JAZZ_INSPECTOR": JSON.stringify(env.ENABLE_JAZZ_INSPECTOR ?? ""),
+    },
     plugins: [
       vue({
         template: {

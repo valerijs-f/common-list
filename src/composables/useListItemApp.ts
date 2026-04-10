@@ -1,17 +1,17 @@
 import { ref, computed, useTemplateRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { CoValueLoadingState, co, deleteCoValues } from "jazz-tools";
-import { useAccount, useAgent, useCoState } from "community-jazz-vue";
+import { CoValueLoadingState, co } from "jazz-tools";
+import { useAccount, useCoState } from "community-jazz-vue";
 import { useClipboard, useTitle } from "@vueuse/core";
 import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useSortable";
 import { generateKeyBetween } from "fractional-indexing";
 import { AppAccount } from "../appAccount";
+import { takeSelfInitiatedListDelete } from "../lists/selfInitiatedListDelete";
 import { ListDocument, ListItem } from "../schema";
 
 export function useListItemApp() {
   const route = useRoute();
   const router = useRouter();
-  const agent = useAgent();
 
   function paramListId(): string | undefined {
     const raw = route.params.listId;
@@ -70,7 +70,7 @@ export function useListItemApp() {
     return "List";
   });
 
-  const canEditListName = computed(() => {
+  const isListCreator = computed(() => {
     const doc = listDocument.value;
     if (!doc?.$isLoaded) return false;
     const id = myAccountId.value;
@@ -119,23 +119,6 @@ export function useListItemApp() {
     ids.$jazz.remove((x) => x === id);
   }
 
-  /** When we delete a list locally, a DELETED subscription update may still fire — don’t show the “owner removed” toast for that. */
-  const suppressOwnerDeletedNoticeFor = new Set<string>();
-
-  async function permanentlyDeleteList(id: string) {
-    suppressOwnerDeletedNoticeFor.add(id);
-    try {
-      await deleteCoValues(ListDocument, id, {
-        resolve: { items: { $each: true } },
-        loadAs: agent,
-      });
-    } finally {
-      setTimeout(() => suppressOwnerDeletedNoticeFor.delete(id), 30_000);
-    }
-    removeIdFromVisited(id);
-    if (listId.value === id) await router.replace({ name: "list" });
-  }
-
   const ownerRemovedListNotice = ref<string | null>(null);
   let ownerNoticeClear: ReturnType<typeof setTimeout> | undefined;
 
@@ -173,7 +156,7 @@ export function useListItemApp() {
 
   function handleListDeletedByOwner(id: string) {
     removeIdFromVisited(id);
-    if (!suppressOwnerDeletedNoticeFor.has(id)) notifyOwnerDeletedList();
+    if (!takeSelfInitiatedListDelete(id)) notifyOwnerDeletedList();
     if (listId.value === id) void router.replace({ name: "list" });
   }
 
@@ -197,43 +180,14 @@ export function useListItemApp() {
         return;
       }
       removeIdFromVisited(payload.id);
-      if (!suppressOwnerDeletedNoticeFor.has(payload.id)) {
-        showInaccessibleListNotice(
-          payload.kind === "unavailable"
-            ? "This list could not be loaded. The link may be wrong or the list may no longer exist."
-            : "You do not have access to this list.",
-        );
-      }
+      showInaccessibleListNotice(
+        payload.kind === "unavailable"
+          ? "This list could not be loaded. The link may be wrong or the list may no longer exist."
+          : "You do not have access to this list.",
+      );
       if (listId.value === payload.id) void router.replace({ name: "list" });
     },
   );
-
-  const editingListName = ref(false);
-  const listNameDraft = ref("");
-
-  watch(listId, () => {
-    editingListName.value = false;
-  });
-
-  function startEditListName() {
-    const doc = listDocument.value;
-    if (!doc?.$isLoaded) return;
-    listNameDraft.value = doc.name;
-    editingListName.value = true;
-  }
-
-  function cancelEditListName() {
-    editingListName.value = false;
-  }
-
-  function saveListName() {
-    const doc = listDocument.value;
-    if (!doc?.$isLoaded || !canEditListName.value) return;
-    const next =
-      listNameDraft.value.trim().length > 0 ? listNameDraft.value.trim() : "Untitled list";
-    doc.$jazz.set("name", next);
-    editingListName.value = false;
-  }
 
   const pageTitle = useTitle("List");
   watchEffect(() => {
@@ -358,18 +312,12 @@ export function useListItemApp() {
     listDocumentLoaded,
     listReady,
     displayListName,
-    canEditListName,
-    editingListName,
-    listNameDraft,
-    startEditListName,
-    cancelEditListName,
-    saveListName,
+    isListCreator,
     shareOrCopy,
     visitedIdsReady,
     visitedListIds,
     myAccountId,
     removeIdFromVisited,
-    permanentlyDeleteList,
     handleListDeletedByOwner,
     ownerRemovedListNotice,
     dismissOwnerNotice,

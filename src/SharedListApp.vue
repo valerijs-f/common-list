@@ -14,18 +14,12 @@ const {
   listDocumentLoaded,
   listReady,
   displayListName,
-  canEditListName,
-  editingListName,
-  listNameDraft,
-  startEditListName,
-  cancelEditListName,
-  saveListName,
+  isListCreator,
   shareOrCopy,
   visitedIdsReady,
   visitedListIds,
   myAccountId,
   removeIdFromVisited,
-  permanentlyDeleteList,
   handleListDeletedByOwner,
   ownerRemovedListNotice,
   dismissOwnerNotice,
@@ -62,15 +56,10 @@ const {
     <div class="rounded-xl border border-gray-700 bg-gray-900 p-6">
       <div v-if="listId" class="mb-6 space-y-3">
         <ListHeader
-          v-model:list-name-draft="listNameDraft"
           :display-list-name="displayListName"
           :list-document-loaded="listDocumentLoaded"
-          :can-edit-list-name="canEditListName"
-          :editing-list-name="editingListName"
+          :settings-list-id="isListCreator && listId ? listId : null"
           @share="shareOrCopy"
-          @start-rename="startEditListName"
-          @save-name="saveListName"
-          @cancel-rename="cancelEditListName"
         />
       </div>
 
@@ -80,7 +69,6 @@ const {
         :visited-list-ids="visitedListIds"
         :my-account-id="myAccountId"
         :on-remove-from-visited="removeIdFromVisited"
-        :on-delete-list-permanently="permanentlyDeleteList"
         :on-list-deleted-by-owner="handleListDeletedByOwner"
       />
 

@@ -6,7 +6,6 @@ defineProps<{
   visitedListIds: string[];
   myAccountId: string;
   onRemoveFromVisited: (id: string) => void;
-  onDeleteListPermanently: (id: string) => Promise<void>;
   onListDeletedByOwner: (id: string) => void;
 }>();
 </script>
@@ -26,7 +25,6 @@ defineProps<{
           :doc-id="vid"
           :my-account-id="myAccountId"
           :on-remove-from-visited="onRemoveFromVisited"
-          :on-delete-list-permanently="onDeleteListPermanently"
           :on-list-deleted-by-owner="onListDeletedByOwner"
         />
       </li>

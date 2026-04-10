@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { RouterLink } from "vue-router";
-import { TrashIcon, XMarkIcon, BookmarkSlashIcon } from "@heroicons/vue/24/outline";
+import { Cog6ToothIcon, BookmarkSlashIcon } from "@heroicons/vue/24/outline";
 import { CoValueLoadingState } from "jazz-tools";
 import { useCoState } from "community-jazz-vue";
 import { ListDocument } from "../schema";
@@ -13,7 +13,6 @@ const props = defineProps<{
   docId: string;
   myAccountId: string;
   onRemoveFromVisited: (id: string) => void;
-  onDeleteListPermanently: (id: string) => Promise<void>;
   onListDeletedByOwner: (id: string) => void;
 }>();
 
@@ -44,7 +43,6 @@ watch(
 const actionDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
   "actionDialog",
 );
-const actionKind = ref<"remove" | "deleteForever">("remove");
 const actionBusy = ref(false);
 const actionError = ref<string | null>(null);
 
@@ -88,14 +86,10 @@ const isOwner = computed(() => {
   return v.createdByAccountId === props.myAccountId;
 });
 
-function openRemoveDialog() {
-  actionKind.value = "remove";
-  actionError.value = null;
-  actionDialog.value?.showModal();
-}
+const settingsLinkClass =
+  "inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-gray-200";
 
-function openDeleteForeverDialog() {
-  actionKind.value = "deleteForever";
+function openRemoveDialog() {
   actionError.value = null;
   actionDialog.value?.showModal();
 }
@@ -109,16 +103,12 @@ function onActionDialogClose() {
   actionError.value = null;
 }
 
-async function confirmAction() {
+async function confirmRemove() {
   if (actionBusy.value) return;
   actionBusy.value = true;
   actionError.value = null;
   try {
-    if (actionKind.value === "remove") {
-      props.onRemoveFromVisited(props.docId);
-    } else {
-      await props.onDeleteListPermanently(props.docId);
-    }
+    props.onRemoveFromVisited(props.docId);
     actionDialog.value?.close();
   } catch (e) {
     actionError.value = e instanceof Error ? e.message : "Something went wrong";
@@ -126,26 +116,6 @@ async function confirmAction() {
     actionBusy.value = false;
   }
 }
-
-const dialogTitle = computed(() =>
-  actionKind.value === "remove"
-    ? "Remove from your lists?"
-    : "Delete this list for everyone?",
-);
-
-const dialogBody = computed(() =>
-  actionKind.value === "remove"
-    ? "The list will stay available to others. You can open it again from a shared link."
-    : "This permanently deletes the list and all tasks. Anyone you shared it with will lose access.",
-);
-
-const confirmLabel = computed(() =>
-  actionKind.value === "remove" ? "Remove" : "Delete forever",
-);
-
-const confirmVariant = computed(() =>
-  actionKind.value === "remove" ? "muted" : "danger",
-);
 </script>
 
 <template>
@@ -171,17 +141,15 @@ const confirmVariant = computed(() =>
       >
         <BookmarkSlashIcon class="h-5 w-5" aria-hidden="true" />
       </UiButton>
-      <UiButton
+      <RouterLink
         v-if="isOwner"
-        variant="iconGhost"
-        class="hover:text-red-400"
-        type="button"
-        title="Delete list for everyone"
-        aria-label="Delete list for everyone"
-        @click="openDeleteForeverDialog"
+        :to="{ name: 'listSettings', params: { listId: docId } }"
+        :class="settingsLinkClass"
+        title="List settings"
+        aria-label="List settings"
       >
-        <TrashIcon class="h-5 w-5" aria-hidden="true" />
-      </UiButton>
+        <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
+      </RouterLink>
     </div>
   </div>
 
@@ -192,14 +160,14 @@ const confirmVariant = computed(() =>
   >
     <template #title>
       <h2 id="visit-action-dialog-title" class="text-lg font-semibold text-white">
-        {{ dialogTitle }}
+        Remove from your lists?
       </h2>
     </template>
     <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
       <p class="min-w-0 truncate text-gray-200" :title="titleForDialog">
         “{{ titleForDialog }}”
       </p>
-      <p>{{ dialogBody }}</p>
+      <p>The list will stay available to others. You can open it again from a shared link.</p>
       <p v-if="actionError" class="text-red-400">{{ actionError }}</p>
     </div>
     <template #actions>
@@ -212,13 +180,8 @@ const confirmVariant = computed(() =>
         >
           Cancel
         </UiButton>
-        <UiButton
-          :variant="confirmVariant"
-          type="button"
-          :disabled="actionBusy"
-          @click="confirmAction"
-        >
-          {{ confirmLabel }}
+        <UiButton variant="muted" type="button" :disabled="actionBusy" @click="confirmRemove">
+          Remove
         </UiButton>
       </UiDialogActions>
     </template>

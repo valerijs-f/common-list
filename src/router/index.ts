@@ -4,6 +4,7 @@ import { passkeyAuthResolved, passkeySignedIn } from "../auth/passkeyAuthState";
 import ProtectedLayout from "../layouts/ProtectedLayout.vue";
 import LoginView from "../views/LoginView.vue";
 import ListItemView from "../views/ListItemView.vue";
+import ListSettingsView from "../views/ListSettingsView.vue";
 
 function safeInternalPath(raw: unknown): string {
   if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//"))
@@ -28,6 +29,11 @@ const router = createRouter({
         {
           path: "",
           redirect: { name: "list" },
+        },
+        {
+          path: "lists/:listId/settings",
+          name: "listSettings",
+          component: ListSettingsView,
         },
         {
           path: "lists/:listId?",

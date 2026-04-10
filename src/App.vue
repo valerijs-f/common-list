@@ -5,8 +5,9 @@ import PasskeyAuthBootstrap from "./auth/PasskeyAuthBootstrap.vue";
 import { AppAccount } from "./appAccount";
 
 const showJazzInspector = import.meta.env.ENABLE_JAZZ_INSPECTOR === "true";
+const rawPeer = import.meta.env.JAZZ_PEER_URL;
 const syncConfig = {
-  peer: import.meta.env.JAZZ_PEER_URL as `wss://${string}`,
+  peer: rawPeer as `wss://${string}`,
   when: "always" as const,
 };
 </script>
