@@ -4,6 +4,7 @@ import OwnerRemovedNoticeBanner from "./components/list/OwnerRemovedNoticeBanner
 import ListHeader from "./components/list/ListHeader.vue";
 import VisitedListsPanel from "./components/list/VisitedListsPanel.vue";
 import ListItemRow from "./components/list/ListItemRow.vue";
+import UiBackLink from "./components/ui/UiBackLink.vue";
 import UiButton from "./components/ui/UiButton.vue";
 import UiDialog from "./components/ui/UiDialog.vue";
 import UiDialogActions from "./components/ui/UiDialogActions.vue";
@@ -53,6 +54,7 @@ const {
       :message="inaccessibleListNotice"
       @dismiss="dismissInaccessibleListNotice"
     />
+    <UiBackLink v-if="listId" />
     <div class="rounded-xl border border-gray-700 bg-gray-900 p-6">
       <div v-if="listId" class="mb-6 space-y-3">
         <ListHeader
