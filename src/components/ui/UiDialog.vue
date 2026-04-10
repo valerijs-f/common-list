@@ -7,7 +7,7 @@ defineProps<{
   dialogClass?: string;
 }>();
 
-defineEmits<{ close: [] }>();
+const emit = defineEmits<{ close: [] }>();
 
 const dialogRef = useTemplateRef<HTMLDialogElement>("dialogRef");
 
@@ -16,19 +16,29 @@ defineExpose({
   close: () => dialogRef.value?.close(),
 });
 
-const shellClass =
-  "fixed left-1/2 top-1/2 z-50 w-[min(100%,24rem)] max-h-[min(90vh,calc(100vh-2rem))] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-xl open:flex open:flex-col open:gap-4 [&::backdrop]:bg-black/70";
+function closeFromBackdrop() {
+  dialogRef.value?.close();
+}
+
+const layerClass =
+  "fixed inset-0 z-50 m-0 max-h-none w-full max-w-none cursor-default border-0 bg-transparent p-0 shadow-none open:flex open:items-start open:justify-center open:px-4 open:pb-4 open:pt-[min(12dvh,3rem)] [&::backdrop]:bg-black/70";
+
+const panelClass =
+  "flex max-h-[min(90dvh,calc(100dvh-2rem))] w-full max-w-[min(24rem,calc(100vw-2rem))] touch-manipulation flex-col gap-4 overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-gray-200 shadow-xl";
 </script>
 
 <template>
   <dialog
     ref="dialogRef"
-    :class="cn(shellClass, dialogClass)"
+    :class="layerClass"
     :aria-labelledby="ariaLabelledby"
-    @close="$emit('close')"
+    @click.self="closeFromBackdrop"
+    @close="emit('close')"
   >
-    <slot name="title" />
-    <slot />
-    <slot name="actions" />
+    <div :class="cn(panelClass, dialogClass)">
+      <slot name="title" />
+      <slot />
+      <slot name="actions" />
+    </div>
   </dialog>
 </template>

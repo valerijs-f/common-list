@@ -5,6 +5,7 @@ import { CoValueLoadingState } from "jazz-tools";
 import { useCoState } from "community-jazz-vue";
 import { ListDocument } from "../schema";
 import UiOverflowMenu from "./ui/UiOverflowMenu.vue";
+import UiButton from "./ui/UiButton.vue";
 import UiDialog from "./ui/UiDialog.vue";
 import UiDialogActions from "./ui/UiDialogActions.vue";
 
@@ -91,6 +92,9 @@ const menuItemClass =
 const settingsLinkClass =
   "block w-full px-3 py-2 text-left text-sm text-gray-200 no-underline hover:bg-gray-800";
 
+const menuItemDangerClass =
+  "block w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-800";
+
 function openRemoveDialog() {
   actionError.value = null;
   actionDialog.value?.showModal();
@@ -122,11 +126,11 @@ async function confirmRemove() {
 
 <template>
   <div
-    class="flex items-stretch gap-1 rounded-lg border border-gray-700 bg-gray-800/40 hover:bg-gray-800/70 transition-colors"
+    class="flex items-stretch gap-3 p-3 rounded-lg border border-gray-700 bg-gray-800/40 hover:bg-gray-800/70 transition-colors"
   >
     <RouterLink
       :to="{ name: 'list', params: { listId: docId } }"
-      class="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-3 py-3 text-left no-underline"
+      class="flex min-w-0 flex-1 flex-col justify-center gap-0.5 text-left no-underline"
     >
       <span class="truncate font-medium text-white" :title="displayName">{{
         displayName
@@ -134,13 +138,10 @@ async function confirmRemove() {
       <span v-if="badgeLabel" class="text-xs text-gray-500">{{ badgeLabel }}</span>
     </RouterLink>
     <div
-      class="flex shrink-0 items-center px-1 py-2"
+      class="flex shrink-0 items-center"
       @click.stop
     >
       <UiOverflowMenu menu-aria-label="List row actions" align="end">
-        <button type="button" role="menuitem" :class="menuItemClass" @click="openRemoveDialog">
-          Remove from my lists
-        </button>
         <RouterLink
           v-if="isOwner"
           role="menuitem"
@@ -149,6 +150,14 @@ async function confirmRemove() {
         >
           List settings
         </RouterLink>
+        <button
+          type="button"
+          role="menuitem"
+          :class="menuItemDangerClass"
+          @click="openRemoveDialog"
+        >
+          Remove from my lists
+        </button>
       </UiOverflowMenu>
     </div>
   </div>
@@ -180,7 +189,7 @@ async function confirmRemove() {
         >
           Cancel
         </UiButton>
-        <UiButton variant="muted" type="button" :disabled="actionBusy" @click="confirmRemove">
+        <UiButton variant="danger" type="button" :disabled="actionBusy" @click="confirmRemove">
           Remove
         </UiButton>
       </UiDialogActions>

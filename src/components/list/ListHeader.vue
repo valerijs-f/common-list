@@ -22,6 +22,9 @@ const menuItemClass =
 
 const settingsLinkClass =
   "block w-full px-3 py-2 text-left text-sm text-gray-200 no-underline hover:bg-gray-800";
+
+const menuItemDangerClass =
+  "block w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-800";
 </script>
 
 <template>
@@ -50,7 +53,7 @@ const settingsLinkClass =
         v-if="completedTaskCount > 0"
         type="button"
         role="menuitem"
-        :class="menuItemClass"
+        :class="menuItemDangerClass"
         @click="emit('removeCompleted')"
       >
         Remove completed tasks

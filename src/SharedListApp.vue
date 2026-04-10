@@ -269,7 +269,7 @@ function cancelFabAddTaskDialog() {
         <p class="min-w-0 truncate text-gray-200" :title="pendingDeleteTitle">
           “{{ pendingDeleteTitle }}”
         </p>
-        <p>Will be removed from the list. This can’t be undone.</p>
+        <p>It will be removed from the list. This can’t be undone.</p>
       </div>
       <template #actions>
         <UiDialogActions>
