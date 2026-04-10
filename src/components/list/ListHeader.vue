@@ -8,6 +8,8 @@ defineProps<{
   settingsListId: string | null;
   /** Number of completed tasks (for “remove completed” visibility). */
   completedTaskCount: number;
+  /** Shown under the title when the list is loaded (e.g. 1/2 completed). */
+  taskProgress: { completed: number; total: number } | null;
 }>();
 
 const emit = defineEmits<{
@@ -23,10 +25,15 @@ const settingsLinkClass =
 </script>
 
 <template>
-  <div class="flex items-start justify-between gap-3">
-    <h1 class="min-w-0 flex-1 truncate text-2xl font-bold text-white" :title="displayListName">
-      {{ displayListName }}
-    </h1>
+  <div class="flex items-center justify-between gap-3">
+    <div class="min-w-0 flex-1">
+      <h1 class="truncate text-2xl font-bold text-white" :title="displayListName">
+        {{ displayListName }}
+      </h1>
+      <p v-if="taskProgress" class="mt-1 text-sm text-gray-500">
+        {{ taskProgress.completed }}/{{ taskProgress.total }} completed
+      </p>
+    </div>
     <UiOverflowMenu menu-aria-label="List actions" align="end">
       <button type="button" role="menuitem" :class="menuItemClass" @click="emit('share')">
         Share list

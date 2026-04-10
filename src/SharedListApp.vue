@@ -132,44 +132,49 @@ function cancelFabAddTaskDialog() {
     />
     <UiBackLink v-if="listId" />
     <div class="rounded-xl border border-gray-700 bg-gray-900 p-6">
-      <div v-if="listId" class="mb-6 space-y-3">
-        <ListHeader
-          :display-list-name="displayListName"
-          :settings-list-id="isListCreator && listId ? listId : null"
-          :completed-task-count="completedTaskCount"
-          @share="shareOrCopy"
-          @remove-completed="requestRemoveAllCompleted"
-        />
-      </div>
+      <template v-if="listId">
+        <div class="space-y-3">
+          <ListHeader
+            :display-list-name="displayListName"
+            :settings-list-id="isListCreator && listId ? listId : null"
+            :completed-task-count="completedTaskCount"
+            :task-progress="
+              listReady ? { completed: completedTaskCount, total: listItems.length } : null
+            "
+            @share="shareOrCopy"
+            @remove-completed="requestRemoveAllCompleted"
+          />
+        </div>
+
+        <div v-if="!listReady" class="py-8 text-center text-gray-400">Loading...</div>
+
+        <div v-else class="mt-4 border-t border-gray-700 pt-4">
+          <ul ref="listItemsEl" class="space-y-2">
+            <ListItemRow
+              v-for="listItem in listItems"
+              :key="listItem.$jazz.id"
+              :list-item="listItem"
+              :is-mine="isListItemMine(listItem)"
+              @toggle="toggleListItem"
+              @delete-request="requestDeleteListItem"
+              @open-detail="openListItemDetail"
+            />
+          </ul>
+
+          <p v-if="listItems.length === 0" class="py-4 text-center text-gray-500">
+            No list items yet. Tap the + button below to add one.
+          </p>
+        </div>
+      </template>
 
       <VisitedListsPanel
-        v-if="!listId"
+        v-else
         :visited-ids-ready="visitedIdsReady"
         :visited-list-ids="visitedListIds"
         :my-account-id="myAccountId"
         :on-remove-from-visited="removeIdFromVisited"
         :on-list-deleted-by-owner="handleListDeletedByOwner"
       />
-
-      <div v-else-if="!listReady" class="py-8 text-center text-gray-400">Loading...</div>
-
-      <template v-else>
-        <ul ref="listItemsEl" class="space-y-2">
-          <ListItemRow
-            v-for="listItem in listItems"
-            :key="listItem.$jazz.id"
-            :list-item="listItem"
-            :is-mine="isListItemMine(listItem)"
-            @toggle="toggleListItem"
-            @delete-request="requestDeleteListItem"
-            @open-detail="openListItemDetail"
-          />
-        </ul>
-
-        <p v-if="listItems.length === 0" class="py-4 text-center text-gray-500">
-          No list items yet. Tap the + button below to add one.
-        </p>
-      </template>
     </div>
 
     <UiDialog
@@ -178,13 +183,13 @@ function cancelFabAddTaskDialog() {
       @close="onFabAddTaskDialogClose"
     >
       <template #title>
-        <h2 id="fab-add-task-title" class="text-lg font-semibold text-white">New task</h2>
+        <h2 id="fab-add-task-title" class="text-lg font-semibold text-white">New item</h2>
       </template>
       <form class="flex flex-col gap-3" @submit.prevent="submitFabAddTask">
         <UiTextField
           id="fab-new-task"
           v-model="fabNewTaskTitle"
-          label="Item"
+          label="Title"
           type="text"
           placeholder="What should be added?"
           autocomplete="off"
@@ -285,13 +290,13 @@ function cancelFabAddTaskDialog() {
     >
       <template #title>
         <h2 id="completed-removal-title" class="text-lg font-semibold text-white">
-          Remove {{ pendingCompletedRemovalIds?.length ?? 0 }} completed tasks?
+          Remove {{ pendingCompletedRemovalIds?.length ?? 0 }} completed
+          {{ (pendingCompletedRemovalIds?.length ?? 0) === 1 ? "task" : "tasks" }}?
         </h2>
       </template>
       <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
         <p>
-          Tasks you complete after this dialog opened are not included. Only tasks that are still
-          completed when you confirm will be removed. This can’t be undone.
+          This can’t be undone.
         </p>
       </div>
       <template #actions>
