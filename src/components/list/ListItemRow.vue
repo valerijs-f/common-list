@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { XMarkIcon, Bars3Icon } from "@heroicons/vue/24/outline";
+import { XMarkIcon, Bars3Icon, EyeIcon, PencilIcon } from "@heroicons/vue/24/outline";
 import { co } from "jazz-tools";
 import { ListItem } from "../../schema";
 import UiButton from "../ui/UiButton.vue";
 
 defineProps<{
   listItem: co.loaded<typeof ListItem>;
+  isMine: boolean;
 }>();
 
 const emit = defineEmits<{
   toggle: [item: co.loaded<typeof ListItem>];
   deleteRequest: [item: co.loaded<typeof ListItem>];
+  openDetail: [item: co.loaded<typeof ListItem>];
 }>();
 </script>
 
@@ -28,17 +30,25 @@ const emit = defineEmits<{
       class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
       @change="emit('toggle', listItem)"
     />
-    <span class="flex-1 min-w-0">
+    <span class="flex min-w-0 flex-1 items-center gap-1">
       <span
-        class="block min-w-0 truncate"
-        :title="listItem.title"
+        class="min-w-0 flex-1 truncate py-0.5 text-left"
         :class="listItem.completed ? 'line-through text-gray-500' : 'text-gray-200'"
+        :title="listItem.title"
       >
         {{ listItem.title }}
       </span>
-      <span class="block text-xs text-gray-500 mt-0.5 truncate">
-        Added by {{ listItem.author }}
-      </span>
+      <UiButton
+        variant="bare"
+        type="button"
+        class="shrink-0 p-1 text-gray-500 transition-colors hover:text-blue-400"
+        :title="isMine ? 'Edit task' : 'View full task'"
+        :aria-label="isMine ? 'Edit task' : 'View full task'"
+        @click.stop="emit('openDetail', listItem)"
+      >
+        <PencilIcon v-if="isMine" class="h-4 w-4" aria-hidden="true" />
+        <EyeIcon v-else class="h-4 w-4" aria-hidden="true" />
+      </UiButton>
     </span>
     <UiButton
       variant="bare"

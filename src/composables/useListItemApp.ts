@@ -7,7 +7,7 @@ import { useSortable, removeNode, insertNodeAt } from "@vueuse/integrations/useS
 import { generateKeyBetween } from "fractional-indexing";
 import { AppAccount } from "../appAccount";
 import { takeSelfInitiatedListDelete } from "../lists/selfInitiatedListDelete";
-import { ListDocument, ListItem } from "../schema";
+import { ListDocument, ListItem, LIST_ITEM_TITLE_MAX_LENGTH } from "../schema";
 
 export function useListItemApp() {
   const route = useRoute();
@@ -204,13 +204,14 @@ export function useListItemApp() {
 
   function addListItem() {
     const list = itemsCoList.value;
-    const title = newTitle.value.trim();
+    const title = newTitle.value.trim().slice(0, LIST_ITEM_TITLE_MAX_LENGTH);
     const author = authorName.value;
-    if (!title || !author || !list) return;
+    const authorAccountId = myAccountId.value;
+    if (!title || !author || !authorAccountId || !list) return;
     const sorted = listItems.value;
     const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
     const order = generateKeyBetween(lastOrder, null);
-    list.$jazz.push({ title, completed: false, order, author });
+    list.$jazz.push({ title, completed: false, order, author, authorAccountId });
     newTitle.value = "";
     newTaskField.value?.focus();
   }
@@ -252,6 +253,89 @@ export function useListItemApp() {
       if (listIndex !== -1) list.$jazz.remove(listIndex);
     }
     deleteConfirmDialog.value?.close();
+  }
+
+  const detailDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("detailDialog");
+  const detailListItemId = ref<string | null>(null);
+  const detailTitle = ref("");
+  const detailTitleOriginal = ref("");
+  const detailAuthor = ref("");
+
+  function openListItemDetail(listItem: co.loaded<typeof ListItem>) {
+    detailListItemId.value = listItem.$jazz.id;
+    detailTitleOriginal.value = listItem.title;
+    detailTitle.value = listItem.title;
+    detailAuthor.value = listItem.author;
+    detailDialog.value?.showModal();
+  }
+
+  function onDetailDialogClose() {
+    detailListItemId.value = null;
+    detailTitleOriginal.value = "";
+    detailTitle.value = "";
+    detailAuthor.value = "";
+  }
+
+  function closeDetailDialog() {
+    detailDialog.value?.close();
+  }
+
+  function listItemIsEditableByMe(
+    item: co.loaded<typeof ListItem>,
+    accountId: string,
+    profileName: string,
+  ): boolean {
+    const storedId = item.authorAccountId;
+    if (typeof storedId === "string" && storedId.length > 0) {
+      return accountId !== "" && storedId === accountId;
+    }
+    return (
+      accountId !== "" &&
+      profileName !== "" &&
+      item.author.trim() === profileName
+    );
+  }
+
+  function isListItemMine(item: co.loaded<typeof ListItem>): boolean {
+    return listItemIsEditableByMe(item, myAccountId.value, authorName.value);
+  }
+
+  const detailCanEdit = computed(() => {
+    const id = detailListItemId.value;
+    const accountId = myAccountId.value;
+    const name = authorName.value;
+    if (!id) return false;
+    const item = listItems.value.find((i) => i.$jazz.id === id);
+    if (!item) return false;
+    return listItemIsEditableByMe(item, accountId, name);
+  });
+
+  function normalizedListItemTitle(s: string): string {
+    return s.trim().slice(0, LIST_ITEM_TITLE_MAX_LENGTH);
+  }
+
+  const canSaveDetail = computed(() => {
+    if (!detailCanEdit.value) return false;
+    const next = normalizedListItemTitle(detailTitle.value);
+    if (!next) return false;
+    const origTrimmed = detailTitleOriginal.value.trim();
+    if (origTrimmed.length > LIST_ITEM_TITLE_MAX_LENGTH) return true;
+    return next !== normalizedListItemTitle(detailTitleOriginal.value);
+  });
+
+  function saveDetailTitle() {
+    const id = detailListItemId.value;
+    const accountId = myAccountId.value;
+    const name = authorName.value;
+    const text = normalizedListItemTitle(detailTitle.value);
+    if (!id || !text) return;
+    const item = listItems.value.find((i) => i.$jazz.id === id);
+    if (!item || !listItemIsEditableByMe(item, accountId, name)) return;
+    item.$jazz.set("title", text);
+    if (!item.authorAccountId && accountId) {
+      item.$jazz.set("authorAccountId", accountId);
+    }
+    closeDetailDialog();
   }
 
   function listShareUrl(): string | null {
@@ -346,5 +430,15 @@ export function useListItemApp() {
     onDeleteDialogClose,
     cancelDeleteDialog,
     confirmDeleteListItem,
+    detailDialog,
+    detailTitle,
+    detailAuthor,
+    openListItemDetail,
+    onDetailDialogClose,
+    closeDetailDialog,
+    detailCanEdit,
+    canSaveDetail,
+    saveDetailTitle,
+    isListItemMine,
   };
 }

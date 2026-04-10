@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useListItemApp } from "./composables/useListItemApp";
+import { LIST_ITEM_TITLE_MAX_LENGTH } from "./schema";
 import OwnerRemovedNoticeBanner from "./components/list/OwnerRemovedNoticeBanner.vue";
 import ListHeader from "./components/list/ListHeader.vue";
 import VisitedListsPanel from "./components/list/VisitedListsPanel.vue";
@@ -39,6 +40,16 @@ const {
   onDeleteDialogClose,
   cancelDeleteDialog,
   confirmDeleteListItem,
+  detailDialog,
+  detailTitle,
+  detailAuthor,
+  openListItemDetail,
+  onDetailDialogClose,
+  closeDetailDialog,
+  detailCanEdit,
+  canSaveDetail,
+  saveDetailTitle,
+  isListItemMine,
 } = useListItemApp();
 </script>
 
@@ -78,8 +89,15 @@ const {
 
       <template v-else>
         <form class="mb-6 space-y-3" @submit.prevent="addListItem">
-          <UiTextField ref="newTaskField" v-model="newTitle" placeholder="New task" />
-          <UiButton type="submit" full-width :disabled="!authorName"> Add </UiButton>
+          <UiTextField
+            ref="newTaskField"
+            v-model="newTitle"
+            placeholder="New task"
+            :maxlength="LIST_ITEM_TITLE_MAX_LENGTH"
+          />
+          <UiButton type="submit" full-width :disabled="!authorName || !myAccountId">
+            Add
+          </UiButton>
         </form>
 
         <ul ref="listItemsEl" class="space-y-2">
@@ -87,8 +105,10 @@ const {
             v-for="listItem in listItems"
             :key="listItem.$jazz.id"
             :list-item="listItem"
+            :is-mine="isListItemMine(listItem)"
             @toggle="toggleListItem"
             @delete-request="requestDeleteListItem"
+            @open-detail="openListItemDetail"
           />
         </ul>
 
@@ -97,6 +117,50 @@ const {
         </p>
       </template>
     </div>
+
+    <UiDialog
+      ref="detailDialog"
+      aria-labelledby="detail-dialog-title"
+      @close="onDetailDialogClose"
+    >
+      <template #title>
+        <h2 id="detail-dialog-title" class="text-lg font-semibold text-white">Task</h2>
+      </template>
+      <div class="w-full min-w-0 space-y-3 text-sm">
+        <label v-if="detailCanEdit" class="sr-only" for="detail-task-text">Task text</label>
+        <textarea
+          v-if="detailCanEdit"
+          id="detail-task-text"
+          v-model="detailTitle"
+          rows="5"
+          autofocus
+          :maxlength="LIST_ITEM_TITLE_MAX_LENGTH"
+          class="min-h-28 w-full resize-y rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        />
+        <p v-else class="whitespace-pre-wrap wrap-break-word text-gray-200">{{ detailTitle }}</p>
+        <p class="text-gray-400">
+          <template v-if="detailCanEdit">Added by you</template>
+          <template v-else>
+            Added by <span class="text-gray-300">{{ detailAuthor }}</span>
+          </template>
+        </p>
+      </div>
+      <template #actions>
+        <UiDialogActions>
+          <UiButton variant="secondary" type="button" :autofocus="!detailCanEdit" @click="closeDetailDialog">
+            Close
+          </UiButton>
+          <UiButton
+            v-if="detailCanEdit"
+            type="button"
+            :disabled="!canSaveDetail"
+            @click="saveDetailTitle"
+          >
+            Save
+          </UiButton>
+        </UiDialogActions>
+      </template>
+    </UiDialog>
 
     <UiDialog
       ref="deleteConfirmDialog"
