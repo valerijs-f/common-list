@@ -2,7 +2,7 @@ import { computed, ref, useTemplateRef, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { deleteCoValues } from "jazz-tools";
 import { useAccount, useAgent, useCoState } from "community-jazz-vue";
-import { useClipboard, useTitle } from "@vueuse/core";
+import { useTitle } from "@vueuse/core";
 import { AppAccount } from "../appAccount";
 import { markListDeleteAsSelfInitiated } from "../lists/selfInitiatedListDelete";
 import { ListDocument } from "../schema";
@@ -11,8 +11,6 @@ export function useListSettings() {
   const route = useRoute();
   const router = useRouter();
   const agent = useAgent();
-  const { copy } = useClipboard({ copiedDuring: 2000 });
-
   const listIdRef = ref<string | undefined>(undefined);
   watch(
     () => route.params.listId,
@@ -103,36 +101,6 @@ export function useListSettings() {
     pageTitle.value = `${displayListName.value} · List settings`;
   });
 
-  function listViewHref(): string {
-    const id = listIdRef.value;
-    if (!id) return "";
-    return router.resolve({ name: "list", params: { listId: id } }).href;
-  }
-
-  async function shareOrCopyListLink() {
-    const path = listViewHref();
-    const url =
-      typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
-    const title = displayListName.value;
-    const text = `${title}\n${url}`;
-
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      const data: ShareData = { title, text, url };
-      if (navigator.canShare && !navigator.canShare(data)) {
-        copy(url);
-        return;
-      }
-      try {
-        await navigator.share(data);
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        copy(url);
-      }
-      return;
-    }
-    copy(url);
-  }
-
   const deleteDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
     "deleteDialog",
   );
@@ -181,7 +149,6 @@ export function useListSettings() {
     isCreator,
     listNameDraft,
     saveListName,
-    shareOrCopyListLink,
     openDeleteDialog,
     closeDeleteDialog,
     onDeleteDialogClose,

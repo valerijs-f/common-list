@@ -12,7 +12,6 @@ const {
   isCreator,
   listNameDraft,
   saveListName,
-  shareOrCopyListLink,
   openDeleteDialog,
   closeDeleteDialog,
   onDeleteDialogClose,
@@ -52,24 +51,13 @@ const {
           <h2 class="text-sm font-medium text-gray-300">Privacy</h2>
           <p class="text-sm leading-relaxed text-gray-400">
             Every list is available to anyone who has the link. They can view and edit tasks.
-            There is no permission management—if a link is leaked or you need to revoke access,
+            There is no permission management - if a link is leaked or you need to revoke access,
             delete this list and create a new one so collaborators get a fresh link.
           </p>
           <p class="text-sm leading-relaxed text-gray-500">
             This screen is only for you as the creator to manage the list; it does not change who
             can access the data on the network.
           </p>
-        </section>
-
-        <section class="mt-8 space-y-3 border-t border-gray-800 pt-6">
-          <h2 class="text-sm font-medium text-gray-300">Share</h2>
-          <p class="text-sm text-gray-400">
-            The list link grants access. Use Share to open your device share sheet; if that isn’t
-            available, the link is copied to your clipboard.
-          </p>
-          <UiButton type="button" variant="secondary" full-width @click="shareOrCopyListLink">
-            Share
-          </UiButton>
         </section>
 
         <section class="mt-8 space-y-3 border-t border-red-900/40 pt-6">

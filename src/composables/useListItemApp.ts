@@ -254,13 +254,23 @@ export function useListItemApp() {
     deleteConfirmDialog.value?.close();
   }
 
+  function listShareUrl(): string | null {
+    const id = listId.value;
+    if (!id) return null;
+    const path = router.resolve({ name: "list", params: { listId: id } }).href;
+    if (typeof window === "undefined") return path;
+    return new URL(path, window.location.origin).href;
+  }
+
   async function shareOrCopy() {
-    const url = window.location.href;
+    const url = listShareUrl();
+    if (!url) return;
     const title = displayListName.value;
-    const text = `${title}\n${url}`;
+    // Only pass title + url. Including text with the URL again makes many share targets
+    // concatenate fields and produce duplicated or glued links (title stuck to URL, etc.).
+    const data: ShareData = { title, url };
 
     if (typeof navigator !== "undefined" && "share" in navigator) {
-      const data: ShareData = { title, text, url };
       if (navigator.canShare && !navigator.canShare(data)) {
         copy(url);
         return;
