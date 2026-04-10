@@ -4,10 +4,10 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { until } from "@vueuse/core";
 import {
   ArrowLeftStartOnRectangleIcon,
+  ClipboardDocumentListIcon,
   HomeIcon,
   PlusIcon,
 } from "@heroicons/vue/24/outline";
-import { MusicalNoteIcon } from "@heroicons/vue/24/solid";
 import { useAccount, useLogOut } from "community-jazz-vue";
 import { AppAccount } from "../appAccount";
 import { passkeySignedIn } from "../auth/passkeyAuthState";
@@ -117,7 +117,7 @@ async function confirmLogOut() {
       class="sticky top-0 z-40 shrink-0 border-b border-gray-800 bg-gray-950/95 backdrop-blur-md supports-backdrop-filter:bg-gray-950/80 pt-[env(safe-area-inset-top,0px)]"
     >
       <div class="flex h-14 items-center gap-2 px-4">
-        <MusicalNoteIcon
+        <ClipboardDocumentListIcon
           class="h-7 w-7 shrink-0 text-blue-500"
           aria-hidden="true"
         />

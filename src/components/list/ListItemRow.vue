@@ -43,14 +43,14 @@ const menuItemDangerClass =
     >
       {{ listItem.title }}
     </span>
-    <UiOverflowMenu class="list-item-menu" menu-aria-label="Task actions" align="end">
+    <UiOverflowMenu class="list-item-menu" menu-aria-label="Actions" align="end">
       <button
         type="button"
         role="menuitem"
         :class="menuItemClass"
         @click="emit('openDetail', listItem)"
       >
-        {{ isMine ? "Edit task" : "View task" }}
+        {{ isMine ? "Edit" : "View" }}
       </button>
       <button
         type="button"

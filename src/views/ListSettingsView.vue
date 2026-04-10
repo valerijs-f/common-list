@@ -53,7 +53,7 @@ const {
         <section class="mt-8 space-y-2 border-t border-gray-800 pt-6">
           <h2 class="text-sm font-medium text-gray-300">Privacy</h2>
           <p class="text-sm leading-relaxed text-gray-400">
-            Every list is available to anyone who has the link. They can view and edit tasks.
+            Every list is available to anyone who has the link. They can view and edit items.
             There is no permission management - if a link is leaked or you need to revoke access,
             delete this list and create a new one so collaborators get a fresh link.
           </p>

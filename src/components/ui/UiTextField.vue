@@ -23,7 +23,6 @@ const props = defineProps<{
 
 const attrs = useAttrs();
 
-/** Avoid browser :invalid visuals fighting Vue-controlled values; we validate in JS / button state. */
 const baseInput =
   "w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none invalid:border-gray-600 invalid:shadow-none focus:invalid:border-transparent focus:invalid:ring-2 focus:invalid:ring-blue-500";
 

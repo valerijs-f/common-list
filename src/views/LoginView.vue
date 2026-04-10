@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { MusicalNoteIcon } from "@heroicons/vue/24/solid";
+import { ClipboardDocumentListIcon } from "@heroicons/vue/24/outline";
 import { usePasskeyAuth } from "community-jazz-vue";
 import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "../auth/passkeyConfig";
 import UiButton from "../components/ui/UiButton.vue";
@@ -86,7 +86,10 @@ watch(
       class="w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-8 shadow-xl"
     >
       <div class="flex items-center gap-2 justify-center mb-6">
-        <MusicalNoteIcon class="w-8 h-8 text-blue-500" aria-hidden="true" />
+        <ClipboardDocumentListIcon
+          class="h-8 w-8 shrink-0 text-blue-500"
+          aria-hidden="true"
+        />
         <h1 class="text-xl font-semibold text-white tracking-tight text-center">
           {{ PASSKEY_APP_NAME }}
         </h1>
