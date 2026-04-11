@@ -6,10 +6,10 @@ defineProps<{
   displayListName: string;
   /** When set, show list settings in the menu (creator only). */
   settingsListId: string | null;
-  /** Number of completed tasks (for “remove completed” visibility). */
-  completedTaskCount: number;
+  /** Number of completed list items (for “remove completed” visibility). */
+  completedListItemCount: number;
   /** Shown under the title when the list is loaded (e.g. 1/2 completed). */
-  taskProgress: { completed: number; total: number } | null;
+  listItemProgress: { completed: number; total: number } | null;
 }>();
 
 const emit = defineEmits<{
@@ -33,8 +33,8 @@ const menuItemDangerClass =
       <h1 class="truncate text-2xl font-bold text-white" :title="displayListName">
         {{ displayListName }}
       </h1>
-      <p v-if="taskProgress" class="mt-1 text-sm text-gray-500">
-        {{ taskProgress.completed }}/{{ taskProgress.total }} completed
+      <p v-if="listItemProgress" class="mt-1 text-sm text-gray-500">
+        {{ listItemProgress.completed }}/{{ listItemProgress.total }} completed
       </p>
     </div>
     <UiOverflowMenu menu-aria-label="List actions" align="end">
@@ -50,13 +50,13 @@ const menuItemDangerClass =
         List settings
       </RouterLink>
       <button
-        v-if="completedTaskCount > 0"
+        v-if="completedListItemCount > 0"
         type="button"
         role="menuitem"
         :class="menuItemDangerClass"
         @click="emit('removeCompleted')"
       >
-        Remove completed tasks
+        Remove completed list items
       </button>
     </UiOverflowMenu>
   </div>

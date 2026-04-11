@@ -53,9 +53,9 @@ const {
         <section class="mt-8 space-y-2 border-t border-gray-800 pt-6">
           <h2 class="text-sm font-medium text-gray-300">Privacy</h2>
           <p class="text-sm leading-relaxed text-gray-400">
-            Every list is available to anyone who has the link. They can view and edit items.
-            There is no permission management - if a link is leaked or you need to revoke access,
-            delete this list and create a new one so collaborators get a fresh link.
+            Every list is available to anyone who has the link. They can view and edit their own items.
+            There is no permission management - if a link is leaked or you need to delete this list
+            and create a new one, and share a fresh link with collaborators.
           </p>
           <p class="text-sm leading-relaxed text-gray-500">
             This screen is only for you as the creator to manage the list; it does not change who
@@ -66,7 +66,7 @@ const {
         <section class="mt-8 space-y-3 border-t border-red-900/40 pt-6">
           <h2 class="text-sm font-medium text-red-400">Danger zone</h2>
           <p class="text-sm text-gray-400">
-            Permanently delete this list and all tasks for everyone. This cannot be undone.
+            Permanently delete this list and all list items for everyone. This cannot be undone.
           </p>
           <UiButton variant="danger" type="button" full-width @click="openDeleteDialog">
             Delete list
@@ -89,7 +89,7 @@ const {
         <p class="min-w-0 truncate text-gray-200" :title="displayListName">
           “{{ displayListName }}”
         </p>
-        <p>This permanently deletes the list and all tasks. Anyone you shared it with will lose access.</p>
+        <p>This permanently deletes the list and all list items. Anyone you shared it with will lose access.</p>
         <p v-if="deleteError" class="text-red-400">{{ deleteError }}</p>
       </div>
       <template #actions>

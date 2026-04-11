@@ -270,14 +270,14 @@ export function useListItemApp() {
     deleteConfirmDialog.value?.close();
   }
 
-  const completedTaskCount = computed(
+  const completedListItemCount = computed(
     () => listItems.value.filter((t) => t.completed).length,
   );
 
   const completedRemovalDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
     "completedRemovalDialog",
   );
-  /** Snapshot of task IDs to clear; count for the modal is this array’s length (fixed at open). */
+  /** Snapshot of list item IDs to clear; count for the modal is this array’s length (fixed at open). */
   const pendingCompletedRemovalIds = ref<string[] | null>(null);
 
   function requestRemoveAllCompleted() {
@@ -496,7 +496,7 @@ export function useListItemApp() {
     onDeleteDialogClose,
     cancelDeleteDialog,
     confirmDeleteListItem,
-    completedTaskCount,
+    completedListItemCount,
     completedRemovalDialog,
     pendingCompletedRemovalIds,
     requestRemoveAllCompleted,

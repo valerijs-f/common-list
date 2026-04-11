@@ -2,7 +2,7 @@
 import { computed, ref, useTemplateRef, watch } from "vue";
 import { useListItemApp } from "./composables/useListItemApp";
 import { LIST_ITEM_TITLE_MAX_LENGTH } from "./schema";
-import { fabAddTaskSignal, signalFabRequestNewListDialog } from "./lib/fabBridge";
+import { fabAddListItemSignal, signalFabRequestNewListDialog } from "./lib/fabBridge";
 import OwnerRemovedNoticeBanner from "./components/list/OwnerRemovedNoticeBanner.vue";
 import ListHeader from "./components/list/ListHeader.vue";
 import VisitedListsPanel from "./components/list/VisitedListsPanel.vue";
@@ -39,7 +39,7 @@ const {
   onDeleteDialogClose,
   cancelDeleteDialog,
   confirmDeleteListItem,
-  completedTaskCount,
+  completedListItemCount,
   completedRemovalDialog,
   pendingCompletedRemovalIds,
   requestRemoveAllCompleted,
@@ -58,63 +58,63 @@ const {
   isListItemMine,
 } = useListItemApp();
 
-const fabNewTaskTitle = ref("");
-const fabAddTaskDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
-  "fabAddTaskDialog",
+const fabNewListItemTitle = ref("");
+const fabAddListItemDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
+  "fabAddListItemDialog",
 );
-const pendingOpenAddTaskFromFab = ref(false);
+const pendingOpenAddListItemFromFab = ref(false);
 
-const canSubmitFabTask = computed(
+const canSubmitFabListItem = computed(
   () =>
-    fabNewTaskTitle.value.trim().length > 0 &&
+    fabNewListItemTitle.value.trim().length > 0 &&
     authorName.value !== "" &&
     myAccountId.value !== "",
 );
 
-function openFabAddTaskDialog() {
-  fabNewTaskTitle.value = "";
-  fabAddTaskDialog.value?.showModal();
+function openFabAddListItemDialog() {
+  fabNewListItemTitle.value = "";
+  fabAddListItemDialog.value?.showModal();
 }
 
-watch(fabAddTaskSignal, () => {
+watch(fabAddListItemSignal, () => {
   if (!listId.value) return;
   if (listReady.value) {
-    openFabAddTaskDialog();
+    openFabAddListItemDialog();
   } else {
-    pendingOpenAddTaskFromFab.value = true;
+    pendingOpenAddListItemFromFab.value = true;
   }
 });
 
 watch([listId, listReady], () => {
   if (!listId.value) {
-    pendingOpenAddTaskFromFab.value = false;
+    pendingOpenAddListItemFromFab.value = false;
     return;
   }
-  if (pendingOpenAddTaskFromFab.value && listReady.value) {
-    pendingOpenAddTaskFromFab.value = false;
-    openFabAddTaskDialog();
+  if (pendingOpenAddListItemFromFab.value && listReady.value) {
+    pendingOpenAddListItemFromFab.value = false;
+    openFabAddListItemDialog();
   }
 });
 
-function onFabAddTaskDialogClose() {
-  fabNewTaskTitle.value = "";
+function onFabAddListItemDialogClose() {
+  fabNewListItemTitle.value = "";
 }
 
-function submitFabAddTask() {
-  if (addListItemWithTitle(fabNewTaskTitle.value)) {
-    fabAddTaskDialog.value?.close();
-    fabNewTaskTitle.value = "";
+function submitFabAddListItem() {
+  if (addListItemWithTitle(fabNewListItemTitle.value)) {
+    fabAddListItemDialog.value?.close();
+    fabNewListItemTitle.value = "";
   }
 }
 
 function chooseCreateListInstead() {
-  fabAddTaskDialog.value?.close();
-  fabNewTaskTitle.value = "";
+  fabAddListItemDialog.value?.close();
+  fabNewListItemTitle.value = "";
   signalFabRequestNewListDialog();
 }
 
-function cancelFabAddTaskDialog() {
-  fabAddTaskDialog.value?.close();
+function cancelFabAddListItemDialog() {
+  fabAddListItemDialog.value?.close();
 }
 </script>
 
@@ -137,9 +137,11 @@ function cancelFabAddTaskDialog() {
           <ListHeader
             :display-list-name="displayListName"
             :settings-list-id="isListCreator && listId ? listId : null"
-            :completed-task-count="completedTaskCount"
-            :task-progress="
-              listReady ? { completed: completedTaskCount, total: listItems.length } : null
+            :completed-list-item-count="completedListItemCount"
+            :list-item-progress="
+              listReady
+                ? { completed: completedListItemCount, total: listItems.length }
+                : null
             "
             @share="shareOrCopy"
             @remove-completed="requestRemoveAllCompleted"
@@ -178,17 +180,17 @@ function cancelFabAddTaskDialog() {
     </div>
 
     <UiDialog
-      ref="fabAddTaskDialog"
-      aria-labelledby="fab-add-task-title"
-      @close="onFabAddTaskDialogClose"
+      ref="fabAddListItemDialog"
+      aria-labelledby="fab-add-list-item-title"
+      @close="onFabAddListItemDialogClose"
     >
       <template #title>
-        <h2 id="fab-add-task-title" class="text-lg font-semibold text-white">New item</h2>
+        <h2 id="fab-add-list-item-title" class="text-lg font-semibold text-white">New list item</h2>
       </template>
-      <form class="flex flex-col gap-3" @submit.prevent="submitFabAddTask">
+      <form class="flex flex-col gap-3" @submit.prevent="submitFabAddListItem">
         <UiTextField
-          id="fab-new-task"
-          v-model="fabNewTaskTitle"
+          id="fab-new-list-item"
+          v-model="fabNewListItemTitle"
           label="Title"
           type="text"
           placeholder="What should be added?"
@@ -205,10 +207,10 @@ function cancelFabAddTaskDialog() {
           </button>
         </p>
         <UiDialogActions>
-          <UiButton variant="secondary" type="button" @click="cancelFabAddTaskDialog">
+          <UiButton variant="secondary" type="button" @click="cancelFabAddListItemDialog">
             Cancel
           </UiButton>
-          <UiButton type="submit" :disabled="!canSubmitFabTask">Add</UiButton>
+          <UiButton type="submit" :disabled="!canSubmitFabListItem">Add</UiButton>
         </UiDialogActions>
       </form>
     </UiDialog>
@@ -219,13 +221,13 @@ function cancelFabAddTaskDialog() {
       @close="onDetailDialogClose"
     >
       <template #title>
-        <h2 id="detail-dialog-title" class="text-lg font-semibold text-white">Task</h2>
+        <h2 id="detail-dialog-title" class="text-lg font-semibold text-white">List item</h2>
       </template>
       <div class="w-full min-w-0 space-y-3 text-sm">
-        <label v-if="detailCanEdit" class="sr-only" for="detail-task-text">Task text</label>
+        <label v-if="detailCanEdit" class="sr-only" for="detail-list-item-text">List item text</label>
         <textarea
           v-if="detailCanEdit"
-          id="detail-task-text"
+          id="detail-list-item-text"
           v-model="detailTitle"
           rows="5"
           autofocus
@@ -263,7 +265,7 @@ function cancelFabAddTaskDialog() {
       @close="onDeleteDialogClose"
     >
       <template #title>
-        <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">Delete this task?</h2>
+        <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">Delete this list item?</h2>
       </template>
       <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
         <p class="min-w-0 truncate text-gray-200" :title="pendingDeleteTitle">
@@ -291,7 +293,7 @@ function cancelFabAddTaskDialog() {
       <template #title>
         <h2 id="completed-removal-title" class="text-lg font-semibold text-white">
           Remove {{ pendingCompletedRemovalIds?.length ?? 0 }} completed
-          {{ (pendingCompletedRemovalIds?.length ?? 0) === 1 ? "task" : "tasks" }}?
+          {{ (pendingCompletedRemovalIds?.length ?? 0) === 1 ? "list item" : "list items" }}?
         </h2>
       </template>
       <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">

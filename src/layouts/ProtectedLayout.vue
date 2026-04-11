@@ -16,7 +16,7 @@ import { createNewListId } from "../lists/createNewList";
 import { LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
 import {
   fabRequestNewListDialogSignal,
-  signalFabAddTask,
+  signalFabAddListItem,
 } from "../lib/fabBridge";
 import UiButton from "../components/ui/UiButton.vue";
 import UiDialog from "../components/ui/UiDialog.vue";
@@ -73,15 +73,15 @@ watch(fabRequestNewListDialogSignal, () => {
   openNewListDialog();
 });
 
-const fabOpensAddTask = computed(() => {
+const fabOpensAddListItem = computed(() => {
   if (route.name !== "list") return false;
   const id = route.params.listId;
   return typeof id === "string" && id.length > 0;
 });
 
 function onCenterFabClick() {
-  if (fabOpensAddTask.value) {
-    signalFabAddTask();
+  if (fabOpensAddListItem.value) {
+    signalFabAddListItem();
     return;
   }
   openNewListDialog();
@@ -149,7 +149,7 @@ async function confirmLogOut() {
         <button
           type="button"
           class="inline-flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:text-gray-300 active:text-blue-400 -outline-offset-2"
-          :aria-label="fabOpensAddTask ? 'Add task' : 'Create new list'"
+          :aria-label="fabOpensAddListItem ? 'Add list item' : 'Create new list'"
           @click="onCenterFabClick"
         >
           <PlusIcon class="h-6 w-6 shrink-0" aria-hidden="true" />
