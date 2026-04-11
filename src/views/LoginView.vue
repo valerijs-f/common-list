@@ -88,6 +88,12 @@ watch(
           Create an account
         </RouterLink>
       </p>
+
+      <p class="mt-4 text-center text-sm text-gray-500">
+        <RouterLink :to="{ name: 'about' }" class="text-blue-400 hover:text-blue-300">
+          About this app
+        </RouterLink>
+      </p>
     </div>
   </div>
 </template>

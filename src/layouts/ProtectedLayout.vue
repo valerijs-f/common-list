@@ -7,6 +7,7 @@ import {
   ClipboardDocumentListIcon,
   HomeIcon,
   PlusIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/vue/24/outline";
 import { useAccount, useLogOut } from "community-jazz-vue";
 import { AppAccount } from "../appAccount";
@@ -116,14 +117,23 @@ async function confirmLogOut() {
     <header
       class="sticky top-0 z-40 shrink-0 border-b border-gray-800 bg-gray-950/95 backdrop-blur-md supports-backdrop-filter:bg-gray-950/80 pt-[env(safe-area-inset-top,0px)]"
     >
-      <div class="flex h-14 items-center gap-2 px-4">
-        <ClipboardDocumentListIcon
-          class="h-7 w-7 shrink-0 text-blue-500"
-          aria-hidden="true"
-        />
-        <span class="truncate text-lg font-semibold tracking-tight text-white">
-          {{ PASSKEY_APP_NAME }}
-        </span>
+      <div class="flex h-14 items-center justify-between gap-2 px-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <ClipboardDocumentListIcon
+            class="h-7 w-7 shrink-0 text-blue-500"
+            aria-hidden="true"
+          />
+          <span class="truncate text-lg font-semibold tracking-tight text-white">
+            {{ PASSKEY_APP_NAME }}
+          </span>
+        </div>
+        <RouterLink
+          :to="{ name: 'about' }"
+          class="inline-flex shrink-0 items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:text-gray-300 active:text-blue-400 -outline-offset-2"
+          aria-label="About this app"
+        >
+          <QuestionMarkCircleIcon class="h-6 w-6 shrink-0" aria-hidden="true" />
+        </RouterLink>
       </div>
     </header>
 

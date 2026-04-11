@@ -7,6 +7,7 @@ import SignupView from "../views/SignupView.vue";
 import ListItemView from "../views/ListItemView.vue";
 import ListSettingsView from "../views/ListSettingsView.vue";
 import NotFoundView from "../views/NotFoundView.vue";
+import AboutView from "../views/AboutView.vue";
 
 function safeInternalPath(raw: unknown): string {
   if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//"))
@@ -27,6 +28,12 @@ const router = createRouter({
       path: "/signup",
       name: "signup",
       component: SignupView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: "/about",
+      name: "about",
+      component: AboutView,
       meta: { requiresAuth: false },
     },
     {
