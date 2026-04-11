@@ -2,11 +2,10 @@
 import { watch } from "vue";
 import { usePasskeyAuth } from "community-jazz-vue";
 import { passkeyAuthResolved, passkeySignedIn } from "./passkeyAuthState";
-import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "./passkeyConfig";
+import { APP_DISPLAY_NAME } from "../appDisplayName";
 
 const auth = usePasskeyAuth({
-  appName: PASSKEY_APP_NAME,
-  appHostname: PASSKEY_HOSTNAME,
+  appName: APP_DISPLAY_NAME,
 });
 
 watch(

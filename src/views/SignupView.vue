@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { ClipboardDocumentListIcon } from "@heroicons/vue/24/outline";
 import { usePasskeyAuth } from "community-jazz-vue";
 import { readErrorMessage } from "../auth/passkeyAuthErrors";
-import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "../auth/passkeyConfig";
+import { APP_DISPLAY_NAME } from "../appDisplayName";
 import UiButton from "../components/ui/UiButton.vue";
 import UiTextField from "../components/ui/UiTextField.vue";
 
@@ -12,8 +12,7 @@ const route = useRoute();
 const router = useRouter();
 
 const auth = usePasskeyAuth({
-  appName: PASSKEY_APP_NAME,
-  appHostname: PASSKEY_HOSTNAME,
+  appName: APP_DISPLAY_NAME,
 });
 
 const username = ref("");
@@ -65,7 +64,7 @@ watch(
           aria-hidden="true"
         />
         <h1 class="text-xl font-semibold text-white tracking-tight text-center">
-          {{ PASSKEY_APP_NAME }}
+          {{ APP_DISPLAY_NAME }}
         </h1>
       </div>
 

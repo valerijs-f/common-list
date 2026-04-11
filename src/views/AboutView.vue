@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
 import { ClipboardDocumentListIcon } from "@heroicons/vue/24/outline";
-import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
+import { APP_DISPLAY_NAME } from "../appDisplayName";
 import UiBackLink from "../components/ui/UiBackLink.vue";
 
 const feedbackMailto = `mailto:val.codes.info%2Bsharedlist@gmail.com?subject=${encodeURIComponent(
-  `${PASSKEY_APP_NAME} — feedback`,
+  `${APP_DISPLAY_NAME} — feedback`,
 )}&body=${encodeURIComponent(
-  `Hi,\n\nI'm writing about ${PASSKEY_APP_NAME}:\n\n`,
+  `Hi,\n\nI'm writing about ${APP_DISPLAY_NAME}:\n\n`,
 )}`;
 </script>
 
@@ -21,7 +21,7 @@ const feedbackMailto = `mailto:val.codes.info%2Bsharedlist@gmail.com?subject=${e
           aria-hidden="true"
         />
         <h1 class="text-xl font-semibold tracking-tight text-white">
-          About {{ PASSKEY_APP_NAME }}
+          About {{ APP_DISPLAY_NAME }}
         </h1>
       </div>
 
@@ -29,7 +29,7 @@ const feedbackMailto = `mailto:val.codes.info%2Bsharedlist@gmail.com?subject=${e
         <section class="space-y-2">
           <h2 class="text-sm font-medium text-gray-300">What it does</h2>
           <p class="text-sm leading-relaxed text-gray-400">
-            {{ PASSKEY_APP_NAME }} is a simple shared checklist. You can create lists, add
+            {{ APP_DISPLAY_NAME }} is a simple shared checklist. You can create lists, add
             items, tick them off, and open the same list on another device. Anyone with a
             list link can open it and add their own items alongside yours.
           </p>

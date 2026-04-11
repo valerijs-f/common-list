@@ -12,7 +12,7 @@ import {
 import { useAccount, useLogOut } from "community-jazz-vue";
 import { AppAccount } from "../appAccount";
 import { passkeySignedIn } from "../auth/passkeyAuthState";
-import { PASSKEY_APP_NAME } from "../auth/passkeyConfig";
+import { APP_DISPLAY_NAME } from "../appDisplayName";
 import { createNewListId } from "../lists/createNewList";
 import { LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
 import {
@@ -124,7 +124,7 @@ async function confirmLogOut() {
             aria-hidden="true"
           />
           <span class="truncate text-lg font-semibold tracking-tight text-white">
-            {{ PASSKEY_APP_NAME }}
+            {{ APP_DISPLAY_NAME }}
           </span>
         </div>
         <RouterLink
