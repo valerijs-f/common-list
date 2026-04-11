@@ -6,6 +6,7 @@ import { usePasskeyAuth } from "community-jazz-vue";
 import { readErrorMessage } from "../auth/passkeyAuthErrors";
 import { PASSKEY_APP_NAME, PASSKEY_HOSTNAME } from "../auth/passkeyConfig";
 import UiButton from "../components/ui/UiButton.vue";
+import UiTextField from "../components/ui/UiTextField.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -15,14 +16,19 @@ const auth = usePasskeyAuth({
   appHostname: PASSKEY_HOSTNAME,
 });
 
+const username = ref("");
 const error = ref<string | null>(null);
 
 const isSignedIn = computed(() => auth.value.state === "signedIn");
 
-async function handleLogIn() {
+async function handleSignUp() {
+  if (!username.value.trim()) {
+    error.value = "Name is required";
+    return;
+  }
   error.value = null;
   try {
-    await auth.value.logIn();
+    await auth.value.signUp(username.value.trim());
   } catch (err) {
     error.value = readErrorMessage(err);
   }
@@ -64,7 +70,8 @@ watch(
       </div>
 
       <p class="text-gray-400 text-sm text-center mb-6">
-        Sign in with a passkey to sync your lists (Face ID, Touch ID, or device PIN).
+        Create an account with a passkey to sync your lists (Face ID, Touch ID,
+        or device PIN).
       </p>
 
       <div
@@ -75,17 +82,25 @@ watch(
         {{ error }}
       </div>
 
-      <UiButton full-width type="button" @click="handleLogIn">
-        Log in with existing account
-      </UiButton>
+      <form class="space-y-3" @submit.prevent="handleSignUp">
+        <UiTextField
+          v-model="username"
+          type="text"
+          placeholder="Display name"
+          autocomplete="name"
+        />
+        <UiButton type="submit" full-width>
+          Sign up with passkey
+        </UiButton>
+      </form>
 
       <p class="mt-6 text-center text-sm text-gray-500">
-        New here?
+        Already have an account?
         <RouterLink
-          :to="{ name: 'signup', query: route.query }"
+          :to="{ name: 'login', query: route.query }"
           class="text-blue-400 hover:text-blue-300 ml-1"
         >
-          Create an account
+          Log in
         </RouterLink>
       </p>
     </div>

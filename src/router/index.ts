@@ -3,6 +3,7 @@ import { until } from "@vueuse/core";
 import { passkeyAuthResolved, passkeySignedIn } from "../auth/passkeyAuthState";
 import ProtectedLayout from "../layouts/ProtectedLayout.vue";
 import LoginView from "../views/LoginView.vue";
+import SignupView from "../views/SignupView.vue";
 import ListItemView from "../views/ListItemView.vue";
 import ListSettingsView from "../views/ListSettingsView.vue";
 import NotFoundView from "../views/NotFoundView.vue";
@@ -20,6 +21,12 @@ const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: "/signup",
+      name: "signup",
+      component: SignupView,
       meta: { requiresAuth: false },
     },
     {
@@ -66,7 +73,7 @@ router.beforeEach(async (to, _from, next) => {
     return;
   }
 
-  if (to.name === "login" && signedIn) {
+  if ((to.name === "login" || to.name === "signup") && signedIn) {
     next(safeInternalPath(to.query.redirect));
     return;
   }
