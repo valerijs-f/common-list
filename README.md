@@ -6,11 +6,11 @@ A real-time, offline-capable shared list app built with [Vue 3](https://vuejs.or
 
 - Passkey sign-up
 - Real-time sync across tabs and devices via Jazz Cloud
-- Offline support with an online/offline toggle
+- Offline support
 - Drag-and-drop reordering via `useSortable`
 - Dynamic page title with incomplete list item count
 - Shareable URL — anyone with the link sees the same list
-- Jazz Inspector for debugging CoValues in development
+- Overview of previosuly saved lists
 
 ## Setup
 
