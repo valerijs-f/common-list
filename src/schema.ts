@@ -9,6 +9,7 @@ export const LIST_DOCUMENT_NAME_MAX_LENGTH = 50;
 export const ListItem = co.map({
   title: z.string().max(LIST_ITEM_TITLE_MAX_LENGTH),
   completed: z.boolean(),
+  isImportant: z.boolean(),
   order: z.string(),
   author: z.string(),
   authorAccountId: z.string(),
@@ -17,5 +18,6 @@ export const ListItem = co.map({
 export const ListDocument = co.map({
   name: z.string().max(LIST_DOCUMENT_NAME_MAX_LENGTH),
   createdByAccountId: z.string(),
+  addImportantItemsToTheTop: z.boolean(),
   items: co.list(ListItem),
 });

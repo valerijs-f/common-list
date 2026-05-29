@@ -218,16 +218,24 @@ export function useListItemApp() {
     pageTitle.value = count > 0 ? `(${count}) ${label}` : label;
   });
 
-  function addListItemWithTitle(rawTitle: string): boolean {
+  function addListItemWithTitle(rawTitle: string, isImportant = false): boolean {
     const list = itemsCoList.value;
+    const doc = listDocument.value;
     const title = rawTitle.trim().slice(0, LIST_ITEM_TITLE_MAX_LENGTH);
     const author = authorName.value;
     const authorAccountId = myAccountId.value;
     if (!title || !author || !authorAccountId || !list) return false;
     const sorted = listItems.value;
-    const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
-    const order = generateKeyBetween(lastOrder, null);
-    list.$jazz.push({ title, completed: false, order, author, authorAccountId });
+    const pinImportant = doc?.$isLoaded && doc.addImportantItemsToTheTop === true;
+    let order: string;
+    if (isImportant && pinImportant) {
+      const firstOrder = sorted.length > 0 ? sorted[0]!.order : null;
+      order = generateKeyBetween(null, firstOrder);
+    } else {
+      const lastOrder = sorted.length > 0 ? sorted[sorted.length - 1]!.order : null;
+      order = generateKeyBetween(lastOrder, null);
+    }
+    list.$jazz.push({ title, completed: false, isImportant, order, author, authorAccountId });
     return true;
   }
 
@@ -327,12 +335,17 @@ export function useListItemApp() {
   const detailTitle = ref("");
   const detailTitleOriginal = ref("");
   const detailAuthor = ref("");
+  const detailIsImportant = ref(false);
+  const detailIsImportantOriginal = ref(false);
 
   function openListItemDetail(listItem: co.loaded<typeof ListItem>) {
     detailListItemId.value = listItem.$jazz.id;
     detailTitleOriginal.value = listItem.title;
     detailTitle.value = listItem.title;
     detailAuthor.value = listItem.author;
+    const important = listItem.isImportant === true;
+    detailIsImportant.value = important;
+    detailIsImportantOriginal.value = important;
     detailDialog.value?.showModal();
   }
 
@@ -341,6 +354,8 @@ export function useListItemApp() {
     detailTitleOriginal.value = "";
     detailTitle.value = "";
     detailAuthor.value = "";
+    detailIsImportant.value = false;
+    detailIsImportantOriginal.value = false;
   }
 
   function closeDetailDialog() {
@@ -385,9 +400,12 @@ export function useListItemApp() {
     if (!detailCanEdit.value) return false;
     const next = normalizedListItemTitle(detailTitle.value);
     if (!next) return false;
+    const importantChanged = detailIsImportant.value !== detailIsImportantOriginal.value;
     const origTrimmed = detailTitleOriginal.value.trim();
-    if (origTrimmed.length > LIST_ITEM_TITLE_MAX_LENGTH) return true;
-    return next !== normalizedListItemTitle(detailTitleOriginal.value);
+    const titleChanged =
+      origTrimmed.length > LIST_ITEM_TITLE_MAX_LENGTH ||
+      next !== normalizedListItemTitle(detailTitleOriginal.value);
+    return titleChanged || importantChanged;
   });
 
   function saveDetailTitle() {
@@ -400,6 +418,9 @@ export function useListItemApp() {
     const item = listItems.value.find((i) => i.$jazz.id === id);
     if (!item || !listItemIsEditableByMe(item, accountId, name)) return;
     item.$jazz.set("title", text);
+    if (detailIsImportant.value !== detailIsImportantOriginal.value) {
+      item.$jazz.set("isImportant", detailIsImportant.value);
+    }
     if (!item.authorAccountId && accountId) {
       item.$jazz.set("authorAccountId", accountId);
     }
@@ -512,6 +533,7 @@ export function useListItemApp() {
     detailCanEdit,
     canSaveDetail,
     saveDetailTitle,
+    detailIsImportant,
     isListItemMine,
   };
 }

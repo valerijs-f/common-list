@@ -14,6 +14,8 @@ const {
   listNameDraft,
   canSaveListName,
   saveListName,
+  addImportantItemsToTheTop,
+  setaddImportantItemsToTheTop,
   openDeleteDialog,
   closeDeleteDialog,
   onDeleteDialogClose,
@@ -37,18 +39,38 @@ const {
       <div v-if="!listReady" class="py-10 text-center text-gray-400">Loading…</div>
 
       <template v-else-if="isCreator">
-        <form class="mt-6 space-y-3" @submit.prevent="saveListName">
-          <UiTextField
-            id="settings-list-name"
-            v-model="listNameDraft"
-            label="List name"
-            type="text"
-            placeholder="List name"
-            autocomplete="off"
-            :maxlength="LIST_DOCUMENT_NAME_MAX_LENGTH"
-          />
-          <UiButton type="submit" full-width :disabled="!canSaveListName">Save name</UiButton>
-        </form>
+        <section class="mt-6 space-y-4">
+          <form class="space-y-3" @submit.prevent="saveListName">
+            <UiTextField
+              id="settings-list-name"
+              v-model="listNameDraft"
+              label="List name"
+              type="text"
+              placeholder="List name"
+              autocomplete="off"
+              :maxlength="LIST_DOCUMENT_NAME_MAX_LENGTH"
+            />
+            <UiButton type="submit" full-width :disabled="!canSaveListName">Save name</UiButton>
+          </form>
+          <div class="min-w-0">
+            <span class="mb-1 block text-sm text-gray-400">List behavior</span>
+            <div class="flex items-start gap-3">
+              <input
+                id="settings-important-items-at-top"
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+                :checked="addImportantItemsToTheTop"
+                @change="setaddImportantItemsToTheTop(($event.target as HTMLInputElement).checked)"
+              />
+              <div class="text-sm leading-relaxed text-gray-300">
+                Add important items to top of the list
+                <p class="mt-0.5 text-gray-500">
+                  When enabled, newly added items marked as important are added at the top of the list.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section class="mt-8 space-y-2 border-t border-gray-800 pt-6">
           <h2 class="text-sm font-medium text-gray-300">Privacy</h2>

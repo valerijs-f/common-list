@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Bars3Icon } from "@heroicons/vue/24/outline";
+import { computed } from "vue";
 import { co } from "jazz-tools";
 import { ListItem } from "../../schema";
 import UiOverflowMenu from "../ui/UiOverflowMenu.vue";
 
-defineProps<{
+const props = defineProps<{
   listItem: co.loaded<typeof ListItem>;
   isMine: boolean;
 }>();
@@ -15,6 +16,8 @@ const emit = defineEmits<{
   openDetail: [item: co.loaded<typeof ListItem>];
 }>();
 
+const isImportant = computed(() => props.listItem.isImportant === true);
+
 const menuItemClass =
   "block w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800";
 
@@ -23,7 +26,16 @@ const menuItemDangerClass =
 </script>
 
 <template>
-  <li class="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800">
+  <li
+    class="group flex items-center gap-3 rounded-lg border p-2 hover:bg-gray-800"
+    :class="
+      isImportant
+        ? listItem.completed
+          ? 'border-blue-400/30 bg-blue-950/15'
+          : 'border-blue-400/60 bg-blue-950/25'
+        : 'border-transparent'
+    "
+  >
     <span
       class="drag-handle cursor-grab active:cursor-grabbing text-gray-600 group-hover:text-gray-400 transition-colors select-none"
       title="Drag to reorder"

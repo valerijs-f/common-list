@@ -55,10 +55,12 @@ const {
   detailCanEdit,
   canSaveDetail,
   saveDetailTitle,
+  detailIsImportant,
   isListItemMine,
 } = useListItemApp();
 
 const fabNewListItemTitle = ref("");
+const fabNewListItemImportant = ref(false);
 const fabAddListItemDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
   "fabAddListItemDialog",
 );
@@ -73,6 +75,7 @@ const canSubmitFabListItem = computed(
 
 function openFabAddListItemDialog() {
   fabNewListItemTitle.value = "";
+  fabNewListItemImportant.value = false;
   fabAddListItemDialog.value?.showModal();
 }
 
@@ -98,18 +101,21 @@ watch([listId, listReady], () => {
 
 function onFabAddListItemDialogClose() {
   fabNewListItemTitle.value = "";
+  fabNewListItemImportant.value = false;
 }
 
 function submitFabAddListItem() {
-  if (addListItemWithTitle(fabNewListItemTitle.value)) {
+  if (addListItemWithTitle(fabNewListItemTitle.value, fabNewListItemImportant.value)) {
     fabAddListItemDialog.value?.close();
     fabNewListItemTitle.value = "";
+    fabNewListItemImportant.value = false;
   }
 }
 
 function chooseCreateListInstead() {
   fabAddListItemDialog.value?.close();
   fabNewListItemTitle.value = "";
+  fabNewListItemImportant.value = false;
   signalFabRequestNewListDialog();
 }
 
@@ -197,6 +203,14 @@ function cancelFabAddListItemDialog() {
           autocomplete="off"
           :maxlength="LIST_ITEM_TITLE_MAX_LENGTH"
         />
+        <label class="flex cursor-pointer items-center gap-2">
+          <input
+            v-model="fabNewListItemImportant"
+            type="checkbox"
+            class="h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+          />
+          <span class="text-sm text-gray-300">Mark as important</span>
+        </label>
         <p class="text-left">
           <button
             type="button"
@@ -235,6 +249,14 @@ function cancelFabAddListItemDialog() {
           class="min-h-28 w-full resize-y rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
         <p v-else class="whitespace-pre-wrap wrap-break-word text-gray-200">{{ detailTitle }}</p>
+        <label v-if="detailCanEdit" class="flex cursor-pointer items-center gap-2">
+          <input
+            v-model="detailIsImportant"
+            type="checkbox"
+            class="h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+          />
+          <span class="text-sm text-gray-300">Mark as important</span>
+        </label>
         <p class="text-gray-400">
           <template v-if="detailCanEdit">Added by you</template>
           <template v-else>
