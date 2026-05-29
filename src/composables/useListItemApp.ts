@@ -240,7 +240,21 @@ export function useListItemApp() {
   }
 
   function toggleListItem(listItem: co.loaded<typeof ListItem>) {
-    listItem.$jazz.set("completed", !listItem.completed);
+    const doc = listDocument.value;
+    const nextCompleted = !listItem.completed;
+    listItem.$jazz.set("completed", nextCompleted);
+
+    if (!nextCompleted || doc?.$isLoaded !== true || doc.moveCompletedItemsToTheBottom !== true) {
+      return;
+    }
+
+    const sorted = listItems.value;
+    const lastIndex = sorted.length - 1;
+    if (lastIndex < 0) return;
+    if (sorted[lastIndex]!.$jazz.id === listItem.$jazz.id) return;
+
+    const lastOrder = sorted[lastIndex]!.order;
+    listItem.$jazz.set("order", generateKeyBetween(lastOrder, null));
   }
 
   const deleteConfirmDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(

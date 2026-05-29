@@ -19,5 +19,6 @@ export const ListDocument = co.map({
   name: z.string().max(LIST_DOCUMENT_NAME_MAX_LENGTH),
   createdByAccountId: z.string(),
   addImportantItemsToTheTop: z.boolean(),
+  moveCompletedItemsToTheBottom: z.boolean(),
   items: co.list(ListItem),
 });

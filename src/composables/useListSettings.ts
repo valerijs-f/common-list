@@ -119,6 +119,18 @@ export function useListSettings() {
     doc.$jazz.set("addImportantItemsToTheTop", value);
   }
 
+  const moveCompletedItemsToTheBottom = computed(() => {
+    const doc = listDocument.value;
+    if (!doc?.$isLoaded) return false;
+    return doc.moveCompletedItemsToTheBottom === true;
+  });
+
+  function setMoveCompletedItemsToTheBottom(value: boolean) {
+    const doc = listDocument.value;
+    if (!doc?.$isLoaded || !isCreator.value) return;
+    doc.$jazz.set("moveCompletedItemsToTheBottom", value);
+  }
+
   const pageTitle = useTitle("List settings");
   watchEffect(() => {
     if (!listReady.value) {
@@ -179,6 +191,8 @@ export function useListSettings() {
     saveListName,
     addImportantItemsToTheTop,
     setaddImportantItemsToTheTop,
+    moveCompletedItemsToTheBottom,
+    setMoveCompletedItemsToTheBottom,
     openDeleteDialog,
     closeDeleteDialog,
     onDeleteDialogClose,

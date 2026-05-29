@@ -13,6 +13,7 @@ export function createNewListId(name: string, createdByAccountId: string): strin
       name: trimmed,
       createdByAccountId,
       addImportantItemsToTheTop: false,
+      moveCompletedItemsToTheBottom: false,
       items: [],
     },
     { owner: group },

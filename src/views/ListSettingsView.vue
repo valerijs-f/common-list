@@ -16,6 +16,8 @@ const {
   saveListName,
   addImportantItemsToTheTop,
   setaddImportantItemsToTheTop,
+  moveCompletedItemsToTheBottom,
+  setMoveCompletedItemsToTheBottom,
   openDeleteDialog,
   closeDeleteDialog,
   onDeleteDialogClose,
@@ -54,19 +56,36 @@ const {
           </form>
           <div class="min-w-0">
             <span class="mb-1 block text-sm text-gray-400">List behavior</span>
-            <div class="flex items-start gap-3">
-              <input
-                id="settings-important-items-at-top"
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
-                :checked="addImportantItemsToTheTop"
-                @change="setaddImportantItemsToTheTop(($event.target as HTMLInputElement).checked)"
-              />
-              <div class="text-sm leading-relaxed text-gray-300">
-                Add important items to top of the list
-                <p class="mt-0.5 text-gray-500">
-                  When enabled, newly added items marked as important are added at the top of the list.
-                </p>
+            <div class="space-y-3">
+              <div class="flex items-start gap-3">
+                <input
+                  id="settings-important-items-at-top"
+                  type="checkbox"
+                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+                  :checked="addImportantItemsToTheTop"
+                  @change="setaddImportantItemsToTheTop(($event.target as HTMLInputElement).checked)"
+                />
+                <div class="text-sm leading-relaxed text-gray-300">
+                  Add important items to top of the list
+                  <p class="mt-0.5 text-gray-500">
+                    When enabled, newly added items marked as important are added at the top of the list.
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <input
+                  id="settings-move-completed-items-to-bottom"
+                  type="checkbox"
+                  class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+                  :checked="moveCompletedItemsToTheBottom"
+                  @change="setMoveCompletedItemsToTheBottom(($event.target as HTMLInputElement).checked)"
+                />
+                <div class="text-sm leading-relaxed text-gray-300">
+                  Move completed items to the bottom
+                  <p class="mt-0.5 text-gray-500">
+                    When enabled, checking an item complete moves it to the end of the list.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
