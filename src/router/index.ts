@@ -10,8 +10,7 @@ import NotFoundView from "../views/NotFoundView.vue";
 import AboutView from "../views/AboutView.vue";
 
 function safeInternalPath(raw: unknown): string {
-  if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//"))
-    return "/lists";
+  if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//")) return "/lists";
   return raw;
 }
 

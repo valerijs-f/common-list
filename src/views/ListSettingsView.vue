@@ -63,12 +63,15 @@ const {
                   type="checkbox"
                   class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
                   :checked="addImportantItemsToTheTop"
-                  @change="setaddImportantItemsToTheTop(($event.target as HTMLInputElement).checked)"
+                  @change="
+                    setaddImportantItemsToTheTop(($event.target as HTMLInputElement).checked)
+                  "
                 />
                 <div class="text-sm leading-relaxed text-gray-300">
                   Add important items to top of the list
                   <p class="mt-0.5 text-gray-500">
-                    When enabled, newly added items marked as important are added at the top of the list.
+                    When enabled, newly added items marked as important are added at the top of the
+                    list.
                   </p>
                 </div>
               </div>
@@ -78,7 +81,9 @@ const {
                   type="checkbox"
                   class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
                   :checked="moveCompletedItemsToTheBottom"
-                  @change="setMoveCompletedItemsToTheBottom(($event.target as HTMLInputElement).checked)"
+                  @change="
+                    setMoveCompletedItemsToTheBottom(($event.target as HTMLInputElement).checked)
+                  "
                 />
                 <div class="text-sm leading-relaxed text-gray-300">
                   Move completed items to the bottom
@@ -94,9 +99,9 @@ const {
         <section class="mt-8 space-y-2 border-t border-gray-800 pt-6">
           <h2 class="text-sm font-medium text-gray-300">Privacy</h2>
           <p class="text-sm leading-relaxed text-gray-400">
-            Every list is available to anyone who has the link. They can view and edit their own items.
-            There is no permission management - if a link is leaked or you need to delete this list
-            and create a new one, and share a fresh link with collaborators.
+            Every list is available to anyone who has the link. They can view and edit their own
+            items. There is no permission management - if a link is leaked or you need to delete
+            this list and create a new one, and share a fresh link with collaborators.
           </p>
           <p class="text-sm leading-relaxed text-gray-500">
             This screen is only for you as the creator to manage the list; it does not change who
@@ -130,7 +135,10 @@ const {
         <p class="min-w-0 truncate text-gray-200" :title="displayListName">
           “{{ displayListName }}”
         </p>
-        <p>This permanently deletes the list and all list items. Anyone you shared it with will lose access.</p>
+        <p>
+          This permanently deletes the list and all list items. Anyone you shared it with will lose
+          access.
+        </p>
         <p v-if="deleteError" class="text-red-400">{{ deleteError }}</p>
       </div>
       <template #actions>
@@ -144,7 +152,12 @@ const {
           >
             Cancel
           </UiButton>
-          <UiButton variant="danger" type="button" :disabled="deleteBusy" @click="confirmDeleteList">
+          <UiButton
+            variant="danger"
+            type="button"
+            :disabled="deleteBusy"
+            @click="confirmDeleteList"
+          >
             Delete forever
           </UiButton>
         </UiDialogActions>

@@ -22,8 +22,7 @@ export const AppAccount = co
     if (!account.$jazz.has("profile")) {
       const profileGroup = Group.create();
       profileGroup.addMember("everyone", "reader");
-      const name =
-        creationProps?.name?.trim().length ? creationProps.name.trim() : "User";
+      const name = creationProps?.name?.trim().length ? creationProps.name.trim() : "User";
       account.$jazz.set(
         "profile",
         co.profile({ name: z.string() }).create({ name }, { owner: profileGroup }),

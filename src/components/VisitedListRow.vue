@@ -40,9 +40,7 @@ watch(
   { immediate: true },
 );
 
-const actionDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
-  "actionDialog",
-);
+const actionDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("actionDialog");
 const actionBusy = ref(false);
 const actionError = ref<string | null>(null);
 
@@ -85,9 +83,6 @@ const isOwner = computed(() => {
   if (!v?.$isLoaded || !props.myAccountId) return false;
   return v.createdByAccountId === props.myAccountId;
 });
-
-const menuItemClass =
-  "block w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800";
 
 const settingsLinkClass =
   "block w-full px-3 py-2 text-left text-sm text-gray-200 no-underline hover:bg-gray-800";
@@ -132,15 +127,10 @@ async function confirmRemove() {
       :to="{ name: 'list', params: { listId: docId } }"
       class="flex min-w-0 flex-1 flex-col justify-center gap-0.5 text-left no-underline"
     >
-      <span class="truncate font-medium text-white" :title="displayName">{{
-        displayName
-      }}</span>
+      <span class="truncate font-medium text-white" :title="displayName">{{ displayName }}</span>
       <span v-if="badgeLabel" class="text-xs text-gray-500">{{ badgeLabel }}</span>
     </RouterLink>
-    <div
-      class="flex shrink-0 items-center"
-      @click.stop
-    >
+    <div class="flex shrink-0 items-center" @click.stop>
       <UiOverflowMenu menu-aria-label="List row actions" align="end">
         <RouterLink
           v-if="isOwner"
@@ -173,9 +163,7 @@ async function confirmRemove() {
       </h2>
     </template>
     <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
-      <p class="min-w-0 truncate text-gray-200" :title="titleForDialog">
-        “{{ titleForDialog }}”
-      </p>
+      <p class="min-w-0 truncate text-gray-200" :title="titleForDialog">“{{ titleForDialog }}”</p>
       <p>The list will stay available to others. You can open it again from a shared link.</p>
       <p v-if="actionError" class="text-red-400">{{ actionError }}</p>
     </div>

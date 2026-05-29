@@ -145,9 +145,7 @@ function cancelFabAddListItemDialog() {
             :settings-list-id="isListCreator && listId ? listId : null"
             :completed-list-item-count="completedListItemCount"
             :list-item-progress="
-              listReady
-                ? { completed: completedListItemCount, total: listItems.length }
-                : null
+              listReady ? { completed: completedListItemCount, total: listItems.length } : null
             "
             @share="shareOrCopy"
             @remove-completed="requestRemoveAllCompleted"
@@ -229,16 +227,14 @@ function cancelFabAddListItemDialog() {
       </form>
     </UiDialog>
 
-    <UiDialog
-      ref="detailDialog"
-      aria-labelledby="detail-dialog-title"
-      @close="onDetailDialogClose"
-    >
+    <UiDialog ref="detailDialog" aria-labelledby="detail-dialog-title" @close="onDetailDialogClose">
       <template #title>
         <h2 id="detail-dialog-title" class="text-lg font-semibold text-white">List item</h2>
       </template>
       <div class="w-full min-w-0 space-y-3 text-sm">
-        <label v-if="detailCanEdit" class="sr-only" for="detail-list-item-text">List item text</label>
+        <label v-if="detailCanEdit" class="sr-only" for="detail-list-item-text"
+          >List item text</label
+        >
         <textarea
           v-if="detailCanEdit"
           id="detail-list-item-text"
@@ -266,7 +262,12 @@ function cancelFabAddListItemDialog() {
       </div>
       <template #actions>
         <UiDialogActions>
-          <UiButton variant="secondary" type="button" :autofocus="!detailCanEdit" @click="closeDetailDialog">
+          <UiButton
+            variant="secondary"
+            type="button"
+            :autofocus="!detailCanEdit"
+            @click="closeDetailDialog"
+          >
             Close
           </UiButton>
           <UiButton
@@ -287,7 +288,9 @@ function cancelFabAddListItemDialog() {
       @close="onDeleteDialogClose"
     >
       <template #title>
-        <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">Delete this list item?</h2>
+        <h2 id="delete-dialog-title" class="text-lg font-semibold text-white">
+          Delete this list item?
+        </h2>
       </template>
       <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
         <p class="min-w-0 truncate text-gray-200" :title="pendingDeleteTitle">
@@ -319,13 +322,16 @@ function cancelFabAddListItemDialog() {
         </h2>
       </template>
       <div class="w-full min-w-0 space-y-2 text-sm text-gray-400">
-        <p>
-          This can’t be undone.
-        </p>
+        <p>This can’t be undone.</p>
       </div>
       <template #actions>
         <UiDialogActions>
-          <UiButton variant="secondary" type="button" autofocus @click="cancelCompletedRemovalDialog">
+          <UiButton
+            variant="secondary"
+            type="button"
+            autofocus
+            @click="cancelCompletedRemovalDialog"
+          >
             Cancel
           </UiButton>
           <UiButton variant="danger" type="button" @click="confirmRemoveAllCompleted">

@@ -292,9 +292,7 @@ export function useListItemApp() {
     deleteConfirmDialog.value?.close();
   }
 
-  const completedListItemCount = computed(
-    () => listItems.value.filter((t) => t.completed).length,
-  );
+  const completedListItemCount = computed(() => listItems.value.filter((t) => t.completed).length);
 
   const completedRemovalDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
     "completedRemovalDialog",
@@ -385,11 +383,7 @@ export function useListItemApp() {
     if (typeof storedId === "string" && storedId.length > 0) {
       return accountId !== "" && storedId === accountId;
     }
-    return (
-      accountId !== "" &&
-      profileName !== "" &&
-      item.author.trim() === profileName
-    );
+    return accountId !== "" && profileName !== "" && item.author.trim() === profileName;
   }
 
   function isListItemMine(item: co.loaded<typeof ListItem>): boolean {

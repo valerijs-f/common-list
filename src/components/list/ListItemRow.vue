@@ -123,23 +123,23 @@ const menuItemDangerClass =
     </span>
     <div class="flex h-9 shrink-0 items-center">
       <UiOverflowMenu class="list-item-menu" menu-aria-label="Actions" align="end">
-      <button
-        type="button"
-        role="menuitem"
-        :class="menuItemClass"
-        @click="emit('openDetail', listItem)"
-      >
-        {{ isMine ? "Edit" : "View" }}
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        :class="menuItemDangerClass"
-        @click="emit('deleteRequest', listItem)"
-      >
-        Delete
-      </button>
-    </UiOverflowMenu>
+        <button
+          type="button"
+          role="menuitem"
+          :class="menuItemClass"
+          @click="emit('openDetail', listItem)"
+        >
+          {{ isMine ? "Edit" : "View" }}
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          :class="menuItemDangerClass"
+          @click="emit('deleteRequest', listItem)"
+        >
+          Delete
+        </button>
+      </UiOverflowMenu>
     </div>
   </li>
 </template>

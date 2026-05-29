@@ -58,8 +58,7 @@ export function useListSettings() {
   });
 
   watch(
-    () =>
-      [listReady.value, isCreator.value, myAccountId.value, listIdRef.value] as const,
+    () => [listReady.value, isCreator.value, myAccountId.value, listIdRef.value] as const,
     () => {
       const id = listIdRef.value;
       if (!id || !myAccountId.value || !listReady.value) return;
@@ -140,9 +139,7 @@ export function useListSettings() {
     pageTitle.value = `${displayListName.value} · List settings`;
   });
 
-  const deleteDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
-    "deleteDialog",
-  );
+  const deleteDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("deleteDialog");
   const deleteBusy = ref(false);
   const deleteError = ref<string | null>(null);
 

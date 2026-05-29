@@ -15,10 +15,7 @@ import { passkeySignedIn } from "../auth/passkeyAuthState";
 import { APP_DISPLAY_NAME } from "../appDisplayName";
 import { createNewListId } from "../lists/createNewList";
 import { LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
-import {
-  fabRequestNewListDialogSignal,
-  signalFabAddListItem,
-} from "../lib/fabBridge";
+import { fabRequestNewListDialogSignal, signalFabAddListItem } from "../lib/fabBridge";
 import UiButton from "../components/ui/UiButton.vue";
 import UiDialog from "../components/ui/UiDialog.vue";
 import UiDialogActions from "../components/ui/UiDialogActions.vue";
@@ -35,9 +32,7 @@ const myAccountId = computed(() => {
   return m.$jazz.id;
 });
 
-const newListDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
-  "newListDialog",
-);
+const newListDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("newListDialog");
 const newListName = ref("");
 
 const canCreateNewList = computed(() => {
@@ -88,9 +83,7 @@ function onCenterFabClick() {
   openNewListDialog();
 }
 
-const logoutDialog = useTemplateRef<{ showModal: () => void; close: () => void }>(
-  "logoutDialog",
-);
+const logoutDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("logoutDialog");
 
 function openLogOutDialog() {
   logoutDialog.value?.showModal();
@@ -119,10 +112,7 @@ async function confirmLogOut() {
     >
       <div class="flex h-14 items-center justify-between gap-2 px-4">
         <div class="flex min-w-0 flex-1 items-center gap-2">
-          <ClipboardDocumentListIcon
-            class="h-7 w-7 shrink-0 text-blue-500"
-            aria-hidden="true"
-          />
+          <ClipboardDocumentListIcon class="h-7 w-7 shrink-0 text-blue-500" aria-hidden="true" />
           <span class="truncate text-lg font-semibold tracking-tight text-white">
             {{ APP_DISPLAY_NAME }}
           </span>
@@ -181,9 +171,7 @@ async function confirmLogOut() {
       @close="onNewListDialogClose"
     >
       <template #title>
-        <h2 id="new-list-dialog-title" class="text-lg font-semibold text-white">
-          New list
-        </h2>
+        <h2 id="new-list-dialog-title" class="text-lg font-semibold text-white">New list</h2>
       </template>
       <form class="flex flex-col gap-3" @submit.prevent="confirmNewList">
         <UiTextField
@@ -206,22 +194,13 @@ async function confirmLogOut() {
       </form>
     </UiDialog>
 
-    <UiDialog
-      ref="logoutDialog"
-      aria-labelledby="logout-dialog-title"
-    >
+    <UiDialog ref="logoutDialog" aria-labelledby="logout-dialog-title">
       <template #title>
-        <h2 id="logout-dialog-title" class="text-lg font-semibold text-white">
-          Log out?
-        </h2>
+        <h2 id="logout-dialog-title" class="text-lg font-semibold text-white">Log out?</h2>
       </template>
-      <p class="text-sm text-gray-400">
-        You’ll need to sign in again to sync your lists.
-      </p>
+      <p class="text-sm text-gray-400">You’ll need to sign in again to sync your lists.</p>
       <UiDialogActions>
-        <UiButton variant="secondary" type="button" @click="cancelLogOutDialog">
-          Cancel
-        </UiButton>
+        <UiButton variant="secondary" type="button" @click="cancelLogOutDialog"> Cancel </UiButton>
         <UiButton type="button" @click="confirmLogOut">Log out</UiButton>
       </UiDialogActions>
     </UiDialog>
