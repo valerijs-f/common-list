@@ -34,13 +34,21 @@ const myAccountId = computed(() => {
 
 const newListDialog = useTemplateRef<{ showModal: () => void; close: () => void }>("newListDialog");
 const newListName = ref("");
+const newListAddImportantToTop = ref(false);
+const newListMoveCompletedToBottom = ref(false);
+
+function resetNewListDialog() {
+  newListName.value = "";
+  newListAddImportantToTop.value = false;
+  newListMoveCompletedToBottom.value = false;
+}
 
 const canCreateNewList = computed(() => {
   return myAccountId.value !== "" && newListName.value.trim().length > 0;
 });
 
 function openNewListDialog() {
-  newListName.value = "";
+  resetNewListDialog();
   newListDialog.value?.showModal();
 }
 
@@ -53,7 +61,10 @@ function confirmNewList() {
   if (!accountId || !newListName.value.trim()) return;
   let id: string;
   try {
-    id = createNewListId(newListName.value, accountId);
+    id = createNewListId(newListName.value, accountId, {
+      addImportantItemsToTheTop: newListAddImportantToTop.value,
+      moveCompletedItemsToTheBottom: newListMoveCompletedToBottom.value,
+    });
   } catch {
     return;
   }
@@ -62,7 +73,7 @@ function confirmNewList() {
 }
 
 function onNewListDialogClose() {
-  newListName.value = "";
+  resetNewListDialog();
 }
 
 watch(fabRequestNewListDialogSignal, () => {
@@ -185,6 +196,42 @@ async function confirmLogOut() {
           required
           :maxlength="LIST_DOCUMENT_NAME_MAX_LENGTH"
         />
+        <div class="min-w-0">
+          <span class="mb-1 block text-sm text-gray-400">List behavior</span>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <input
+                id="new-list-important-items-at-top"
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+                :checked="newListAddImportantToTop"
+                @change="newListAddImportantToTop = ($event.target as HTMLInputElement).checked"
+              />
+              <div class="text-sm leading-relaxed text-gray-300">
+                Add important items to top of the list
+                <p class="mt-0.5 text-gray-500">
+                  When enabled, newly added items marked as important are added at the top of the
+                  list.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <input
+                id="new-list-move-completed-items-to-bottom"
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+                :checked="newListMoveCompletedToBottom"
+                @change="newListMoveCompletedToBottom = ($event.target as HTMLInputElement).checked"
+              />
+              <div class="text-sm leading-relaxed text-gray-300">
+                Move completed items to the bottom
+                <p class="mt-0.5 text-gray-500">
+                  When enabled, checking an item complete moves it to the end of the list.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
         <UiDialogActions>
           <UiButton variant="secondary" type="button" @click="cancelNewListDialog">
             Cancel

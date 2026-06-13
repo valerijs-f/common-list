@@ -1,7 +1,16 @@
 import { Group } from "jazz-tools";
 import { ListDocument, LIST_DOCUMENT_NAME_MAX_LENGTH } from "../schema";
 
-export function createNewListId(name: string, createdByAccountId: string): string {
+type CreateNewListOptions = {
+  addImportantItemsToTheTop?: boolean;
+  moveCompletedItemsToTheBottom?: boolean;
+};
+
+export function createNewListId(
+  name: string,
+  createdByAccountId: string,
+  options: CreateNewListOptions = {},
+): string {
   const trimmed = name.trim().slice(0, LIST_DOCUMENT_NAME_MAX_LENGTH);
   if (!trimmed) {
     throw new Error("List name is required");
@@ -12,8 +21,8 @@ export function createNewListId(name: string, createdByAccountId: string): strin
     {
       name: trimmed,
       createdByAccountId,
-      addImportantItemsToTheTop: false,
-      moveCompletedItemsToTheBottom: false,
+      addImportantItemsToTheTop: options.addImportantItemsToTheTop ?? false,
+      moveCompletedItemsToTheBottom: options.moveCompletedItemsToTheBottom ?? false,
       items: [],
     },
     { owner: group },
